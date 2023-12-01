@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+project(LibTensor)
+aux_source_directory(./src DIR_SRCS)
+include_directories(inc)
+add_executable(LibTensor ${DIR_SRCS})

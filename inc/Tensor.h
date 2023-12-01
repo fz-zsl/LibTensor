@@ -13,8 +13,13 @@ namespace ts {
 			Tensor(int src_dim, int src_shape[], T *src_data);
 			~Tensor();
 			T getVal(int idx[]);
+			Tensor<T> slice(std::pair<int,int> range[]);
+			Tensor<T> tile(int reps[]);
+			void modify(std::pair<int,int> range[], Tensor<T> val);
 			Tensor<T> transpose(int src_dim1, int src_dim2);
 			Tensor<T> permute(int src_order[]);
+			void print(int newDim, int newShape[]);
+			void print();
 	};
 
 // Part 1: creation and initialization
@@ -80,14 +85,8 @@ namespace ts {
 	// repeat the tensor along each dimension by reps times
 
 	template <typename T>
-	Tensor<T> modify(int src_dim, int src_start, int src_end, T src_val);
-	// modify the tensor from src_start to src_end (exclusive)
-	// along dimension src_dim data from with src_val
-
-	template <typename T>
-	Tensor<T> modify(Tensor<T> src, int src_start[], int src_end[], Tensor<T> val);
-	// modify the tensor src from src_start to src_end (exclusive)
-	// with the data from tensor val
+	void modify(Tensor<T> src, std::pair<int,int> range[], Tensor<T> val);
+	// modify the tensor src from src_start to src_end (exclusive) with the data from tensor val
 
 	template <typename T>
 	Tensor<T> transpose(Tensor<T> src, int src_dim1, int src_dim2);
@@ -97,8 +96,16 @@ namespace ts {
 	Tensor<T> permute(Tensor<T> src, int src_order[]);
 	// permute the tensor with the given order
 
-//	Part 3: Math Operations
-//3.1------------------------------------------------------------------------------------------------
+	template <typename T>
+	void print(Tensor<T> src, int newDim, int newShape[]);
+	// print a tensor in given shape
+
+	template <typename T>
+	void print(Tensor<T> src);
+	// print a tensor in original shape 
+
+//	Part 3: Mathematical Operations
+
 	template <typename T>
 	Tensor<T> operator + (Tensor<T> src1, Tensor<T> src2);
 	// Inplementation of Add() between 2 Tensor
