@@ -1,6 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+
 #include "Tensor.h"
 
 template <typename T>
@@ -50,6 +54,15 @@ ts::Tensor<T>::~Tensor() {
 	dim = -1;
 	delete[] shape;
 	delete[] data;
+}
+
+template <typename T>
+T ts::Tensor<T>::getVal(int idx[]) {
+	int pos = 0, size = 1;
+	for (int i = dim - 1; i >= 0; --i) {
+		pos += idx[i] * size;
+	}
+	return data[pos];
 }
 
 template <typename T>
@@ -131,6 +144,8 @@ ts::Tensor<T> ts::Tensor<T>::permute(int src_order[]) {
 			}
 		}
 	}
+	delete[] oldIdx;
+	delete[] weight;
 	return result;
 }
 
@@ -246,7 +261,7 @@ ts::Tensor<T> ts::full_like(ts::Tensor<T> src, T src_val) {
 }
 
 template <typename T>
-ts::Tensor<T> ts::arange(T start, T end, T step) {
+ts::Tensor<T> ts::excrange(T start, T end, T step) {
 	if (step == 0) {
 		throw std::invalid_argument("step cannot be zero.");
 	}
@@ -259,7 +274,7 @@ ts::Tensor<T> ts::arange(T start, T end, T step) {
 }
 
 template <typename T>
-ts::Tensor<T> ts::range(T start, T end, T step) {
+ts::Tensor<T> ts::incrange(T start, T end, T step) {
 	if (step == 0) {
 		throw std::invalid_argument("step cannot be zero.");
 	}
@@ -267,6 +282,110 @@ ts::Tensor<T> ts::range(T start, T end, T step) {
 	ts::Tensor<T> result(1, new int[1]{size});
 	for (int i = 0; i < size; ++i) {
 		result.data[i] = start + i * step;
+	}
+	return result;
+}
+
+// Part 2: tensor operations
+
+template <typename T>
+ts::Tensor<T> slice(ts::Tensor<T> src, std::pair<int,int> range[]) {
+	if (src_start == nullptr) {
+		throw std::invalid_argument("src_start is a NULL pointer.");
+	}
+	if (src_end == nullptr) {
+		throw std::invalid_argument("src_end is a NULL pointer.");
+	}
+	for (int i = 0; i < src.dim; ++i) {
+		if (range[i].second == -1) {
+			// -1 as a label of ignoring this dimension
+			range[i].second = range[i].first + 1;
+		}
+		if (range[i].first < 0 || range[i].first >= src.shape[i]) {
+			throw std::invalid_argument("Left bound of dimension" + i + "out of range.");
+		}
+		if (range[i].second <= range[i].first || range[i].second > src.shape[i]) {
+			throw std::invalid_argument("Right bound of dimension" + i + "out of range.");
+		}
+	}
+	int *oldIdx = new int[dim];
+	int newDim = 0;
+	for (int i = 0; i < dim; ++i) {
+		oldIdx[i] = range[i].first;
+		if (range[i].second - range[i].first > 1) {
+			++newDim;
+		}
+	}
+	int *newShape = new int[newDim];
+	int newDim = 0;
+	for (int i = 0; i < dim; ++i) {
+		if (range[i].second - range[i].first > 1) {
+			newShape[++newDim] = range[i].second - range[i].first;
+		}
+	}
+	ts::Tensor<T> result(newDim, newShape);
+	delete[] newShape;
+	int newPos = 0;
+	while (true) {
+		int oldPos = 0, wight = 1;
+		for (int i = dim - 1; i >= 0; --i) {
+			oldPos += oldIdx[i] * weight;
+			weight *= src.shape[i];
+		}
+		result.data[newPos] = src.data[oldPos];
+		++newPos;
+		++oldIdx[dim - 1];
+		for (int i = dim - 1; i > 0; ++i) {
+			if (oldIdx[i] == range[i].second) {
+				oldIdx[i] = range[i].first;
+				++oldIdx[i - 1];
+			}
+		}
+		if (oldIdx[0] == range[0].second) {
+			break;
+		}
+	}
+	delete[] oldIdx;
+	return null;
+}
+
+template <typename T>
+ts::Tensor<T> concat(ts::Tensor<T> src1, ts::Tensor<T> src2, int dim) {
+	if (src1.dim != src2.dim) {
+		throw std::invalid_argument("Unconcatenatable sources (different dimension).");
+	}
+	for (int i = 0; i < src1.dim; ++i) {
+		if (i != dim && src1.shape[i] != src2.shape[i]) {
+			throw std::invalid_argument("Unconcatenatable sources (shape error).");
+		}
+	}
+	int *newShape = new int[src1.dim];
+	for (int i = 0; i < src1.dim; ++i) {
+		if (i != dim) {
+			newShape[i] = src1.shape[i];
+		}
+		else {
+			newShape[i] = src1.shape[i] + src2.shape[i];
+		}
+	}
+	ts::Tensor<T> result(src1.dim, newShape);
+	int weight1 = 1, weight2 = 1;
+	for (int i = src1.dim - 1; i > dim; --i) {
+		weight1 *= src1.shape[i];
+	}
+	weight1 *= src1.shape[dim];
+	weight2 *= src2.shape[dim];
+	int blkCnt = 1;
+	for (int i = dim - 1; i >= 0; --i) {
+		blkCnt *= src1.shape[i];
+	}
+	for (int i = 0; i < blkCnt; ++i) {
+		for (int j = 0; j < weight1; ++j) {
+			result.data[i * (weight1 + weight2) + j] = src1.data[i * weight1 + j];
+		}
+		for (int j = 0; j < weight1; ++j) {
+			result.data[i * (weight1 + weight2) + weight1 + j] = src2.data[i * weight2 + j];
+		}
 	}
 	return result;
 }

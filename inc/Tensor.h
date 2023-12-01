@@ -1,7 +1,9 @@
+#include <iostream>
+
 namespace ts {
 	template <typename T>
 	class Tensor {
-		private:
+		public:
 			int dim;
 			int *shape;
 			T *data;
@@ -10,6 +12,7 @@ namespace ts {
 			Tensor(int src_dim, int src_shape[]);
 			Tensor(int src_dim, int src_shape[], T *src_data);
 			~Tensor();
+			T getVal(int idx[]);
 			Tensor<T> transpose(int src_dim1, int src_dim2);
 			Tensor<T> permute(int src_order[]);
 	};
@@ -53,32 +56,23 @@ namespace ts {
 	// create a tensor with the same shape as src and fill it with src_val
 
 	template <typename T>
-	Tensor<T> arange(T start, T end, T step);
+	Tensor<T> excrange(T start, T end, T step);
 	// create a 1D tensor from start to end (exclusive)
 	// with common difference step
 
 	template <typename T>
-	Tensor<T> range(T start, T end, T step);
+	Tensor<T> incrange(T start, T end, T step);
 	// create a 1D tensor from start to end (inclusive)
 	// with common difference step
 
 	// Part 2: tensor operations
 
 	template <typename T>
-	Tensor<T> index(Tensor<T> src, int src_index[]);
-	// get the value of the tensor at the given index
+	Tensor<T> slice(Tensor<T> src, std::pair<int,int> range[]);
+	// get the slice of the tensor from first to second (exclusive)
 
 	template <typename T>
-	Tensor<T> slice(Tensor<T> src, int src_dim, int src_start, int src_end);
-	// get the slice of the tensor from src_start to src_end (exclusive)
-	// along dimension src_dim
-
-	template <typename T>
-	Tensor<T> slice(Tensor<T> src, int src_start[], int src_end[]);
-	// get the slice of the tensor from src_start to src_end (exclusive)
-
-	template <typename T>
-	Tensor<T> concat(Tensor<T> src1, Tensor<T> src2, int src_dim);
+	Tensor<T> concat(Tensor<T> src1, Tensor<T> src2, int dim);
 	// concatenate two tensors along the given dimension
 
 	template <typename T>
