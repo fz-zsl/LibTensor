@@ -289,7 +289,7 @@ ts::Tensor<T> ts::incrange(T start, T end, T step) {
 // Part 2: tensor operations
 
 template <typename T>
-ts::Tensor<T> slice(ts::Tensor<T> src, std::pair<int,int> range[]) {
+ts::Tensor<T> ts::slice(ts::Tensor<T> src, std::pair<int,int> range[]) {
 	if (src_start == nullptr) {
 		throw std::invalid_argument("src_start is a NULL pointer.");
 	}
@@ -350,7 +350,7 @@ ts::Tensor<T> slice(ts::Tensor<T> src, std::pair<int,int> range[]) {
 }
 
 template <typename T>
-ts::Tensor<T> concat(ts::Tensor<T> src1, ts::Tensor<T> src2, int dim) {
+ts::Tensor<T> ts::concat(ts::Tensor<T> src1, ts::Tensor<T> src2, int dim) {
 	if (src1.dim != src2.dim) {
 		throw std::invalid_argument("Unconcatenatable sources (different dimension).");
 	}
@@ -390,7 +390,7 @@ ts::Tensor<T> concat(ts::Tensor<T> src1, ts::Tensor<T> src2, int dim) {
 	return result;
 }
 template <typename T>
-ts::Tensor<T> operator + (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+ts::Tensor<T> ts::operator + (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
 	for (int i = 0; i < src1.dim; ++i) 
 		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
@@ -402,7 +402,7 @@ ts::Tensor<T> operator + (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator + (ts::Tensor<T> src1, T src2) {
+ts::Tensor<T> ts::operator + (ts::Tensor<T> src1, T src2) {
 	ts::Tensor<T> result(src1.dim, src1.shape);
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
@@ -411,7 +411,7 @@ ts::Tensor<T> operator + (ts::Tensor<T> src1, T src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator - (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+ts::Tensor<T> ts::operator - (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
 	for (int i = 0; i < src1.dim; ++i) 
 		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
@@ -423,7 +423,7 @@ ts::Tensor<T> operator - (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator - (ts::Tensor<T> src1, T src2) {
+ts::Tensor<T> ts::operator - (ts::Tensor<T> src1, T src2) {
 	ts::Tensor<T> result(src1.dim, src1.shape);
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
@@ -432,7 +432,7 @@ ts::Tensor<T> operator - (ts::Tensor<T> src1, T src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator * (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+ts::Tensor<T> ts::operator * (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
 	for (int i = 0; i < src1.dim - 2; ++i) 
 		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
@@ -445,7 +445,7 @@ ts::Tensor<T> operator * (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator * (ts::Tensor<T> src1, T src2) {
+ts::Tensor<T> ts::operator * (ts::Tensor<T> src1, T src2) {
 	ts::Tensor<T> result(src1.dim, src1.shape);
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
@@ -454,7 +454,7 @@ ts::Tensor<T> operator * (ts::Tensor<T> src1, T src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator / (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+ts::Tensor<T> ts::operator / (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
 	for (int i = 0; i < src1.dim; ++i) 
 		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
@@ -466,7 +466,7 @@ ts::Tensor<T> operator / (ts::Tensor<T> src1, ts::Tensor<T> src2) {
 }
 
 template <typename T>
-ts::Tensor<T> operator / (ts::Tensor<T> src1, T src2) {
+ts::Tensor<T> ts::operator / (ts::Tensor<T> src1, T src2) {
 	ts::Tensor<T> result(src1.dim, src1.shape);
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
@@ -475,7 +475,7 @@ ts::Tensor<T> operator / (ts::Tensor<T> src1, T src2) {
 }
 
 template <typename T>
-ts::Tensor<T> log(ts::Tensor<T> src) {
+ts::Tensor<T> ts::log(ts::Tensor<T> src) {
 	ts::Tensor<T> result(src1.dim, src1.shape);
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src.shape[i];
@@ -484,12 +484,12 @@ ts::Tensor<T> log(ts::Tensor<T> src) {
 }
 
 template <typename T>
-ts::Tensor<T> sum(ts::Tensor<T> src, int dim) {
+ts::Tensor<T> ts::sum(ts::Tensor<T> src, int dim) {
 //TODO	
 }
 
 template <typename T>
-T mean(ts::Tensor<T> src) {
+T ts::mean(ts::Tensor<T> src) {
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
 	T cur = (T)0;
@@ -498,7 +498,7 @@ T mean(ts::Tensor<T> src) {
 }
 
 template <typename T>
-T min(ts::Tensor<T> src) {
+T ts::min(ts::Tensor<T> src) {
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
 	T cur = src.shape[0];
@@ -507,7 +507,7 @@ T min(ts::Tensor<T> src) {
 }
 
 template <typename T>
-T max(ts::Tensor<T> src) {
+T ts::max(ts::Tensor<T> src) {
 	int size = 1;
 	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
 	T cur = src.shape[0];
