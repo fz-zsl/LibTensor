@@ -151,5 +151,29 @@ namespace ts {
 	template <typename T>
 	T max(Tensor<T> src);
 	// Inplementation of Max()
+//------------------------------------------------------------------------------------------------------
+//3.3---------------------------------------------------------------------------------------------------
+	template <typename T>
+	Tensor<bool> operator == (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of eq()
 
+	template <typename T>
+	Tensor<bool> operator != (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of ne()
+	
+	template <typename T>
+	Tensor<bool> operator > (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of gt()
+
+	template <typename T>
+	Tensor<bool> operator >= (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of ge()
+
+	template <typename T>
+	Tensor<bool> operator < (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of lt()
+
+	template <typename T>
+	Tensor<bool> operator <= (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of le()
 }

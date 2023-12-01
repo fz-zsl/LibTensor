@@ -514,3 +514,75 @@ T ts::max(ts::Tensor<T> src) {
 	for (int i = 1; i < size; ++i) cur = max(src.shape[i], cur);
 	return cur;
 }
+
+template <typename T>
+ts::Tensor<bool> ts::operator == (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] == src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
+
+template <typename T>
+ts::Tensor<bool> ts::operator != (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] != src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
+
+template <typename T>
+ts::Tensor<bool> ts::operator > (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] > src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
+
+template <typename T>
+ts::Tensor<bool> ts::operator >= (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] >= src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
+
+template <typename T>
+ts::Tensor<bool> ts::operator < (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] < src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
+
+template <typename T>
+ts::Tensor<bool> ts::operator <= (ts::Tensor<T> src1, ts::Tensor<T> src2) {
+	if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
+	for (int i = 0; i < src1.dim; ++i) 
+		if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
+	ts::Tensor<bool> result(src1.dim, src1.shape);
+	int size = 1;
+	for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
+	for (int i = 0; i < size; ++i) if (src1.shape[i] <= src2.shape[i]) result.data[i] = true; else result.data[i] = false;
+	return result;
+}
