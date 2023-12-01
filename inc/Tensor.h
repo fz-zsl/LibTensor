@@ -1,7 +1,7 @@
 namespace ts {
 	template <typename T>
 	class Tensor {
-		private:
+		public:
 			int dim;
 			int *shape;
 			T *data;
@@ -14,7 +14,7 @@ namespace ts {
 			Tensor<T> permute(int src_order[]);
 	};
 
-	// Part 1: creation and initialization
+// Part 1: creation and initialization
 
 	template <typename T>
 	Tensor<T> zeros(int src_dim, int src_shape[]);
@@ -62,7 +62,7 @@ namespace ts {
 	// create a 1D tensor from start to end (inclusive)
 	// with common difference step
 
-	// Part 2: tensor operations
+// Part 2: tensor operations
 
 	template <typename T>
 	Tensor<T> index(Tensor<T> src, int src_index[]);
@@ -102,4 +102,60 @@ namespace ts {
 	template <typename T>
 	Tensor<T> permute(Tensor<T> src, int src_order[]);
 	// permute the tensor with the given order
+
+//	Part 3: Math Operations
+//3.1------------------------------------------------------------------------------------------------
+	template <typename T>
+	Tensor<T> operator + (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of Add() between 2 Tensor
+
+	template <typename T>
+	Tensor<T> operator + (Tensor<T> src1, T src2);
+	// Inplementation of Add() between a Tensor and a single prototype(int, float...)
+
+	template <typename T>
+	Tensor<T> operator - (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of Sub() between 2 Tensor
+
+	template <typename T>
+	Tensor<T> operator - (Tensor<T> src1, T src2);
+	// Inplementation of Sub() between a Tensor and a single prototype(int, float...)
+
+	template <typename T>
+	Tensor<T> operator * (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of Sub() between 2 Tensor
+
+	template <typename T>
+	Tensor<T> operator * (Tensor<T> src1, T src2);
+	// Inplementation of Sub() between a Tensor and a single prototype(int, float...)
+
+	template <typename T>
+	Tensor<T> operator / (Tensor<T> src1, Tensor<T> src2);
+	// Inplementation of Div() between 2 Tensor
+
+	template <typename T>
+	Tensor<T> operator / (Tensor<T> src1, T src2);
+	// Inplementation of Div() between a Tensor and a single prototype(int, float...)
+
+	template <typename T>
+	Tensor<T> log(Tensor<T> src);
+	// Inplementation of Log() with base of e
+//------------------------------------------------------------------------------------------------------
+//3.2---------------------------------------------------------------------------------------------------
+	template <typename T>
+	Tensor<T> sum(Tensor<T> src, int dim);
+	// Inplementation of Sum()
+
+	template <typename T>
+	T mean(Tensor<T> src);
+	// Inplementation of Mean()
+
+	template <typename T>
+	T min(Tensor<T> src);
+	// Inplementation of Min()
+
+	template <typename T>
+	T max(Tensor<T> src);
+	// Inplementation of Max()
+
 }
