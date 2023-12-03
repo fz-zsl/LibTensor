@@ -4,14 +4,21 @@ using namespace ts;
 using namespace std;
 
 int main() {
-    // Tensor<int> t1(3, new int[3]{2, 3, 4},
-    //     new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    //                 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    //                 21, 22, 23, 24}
-    // );
-    // t1.print();
+    Tensor<int> t1(3, new int[3]{2, 3, 4},
+        new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                    21, 22, 23, 24}
+    );
+    Tensor<int> t2(3, new int[3]{2, 3, 4},
+        new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                    21, 22, 23, 24}
+    );
+    Tensor<int> t3(t1.add(t2));
+    t3.print();
+    //t1.print();
     // t1.print(2, new int[2]{4, 6});
-    // Tensor<int> t2(t1.slice(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}));
+    //Tensor<int> t2(t1.slice(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}));
     // t2.print();
     // Tensor<int> t3(t1.slice(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, -1), make_pair(2, 4)}));
     // t3.print();
@@ -20,7 +27,7 @@ int main() {
     // t1.modify(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}, t4);
     // t1.print();
     // t1.permute(new int[3]{2, 0, 1}).print();
-    // t1.transpose(1, 2).print();
+    //t1.transpose(1, 2).print();
     // t1.transpose(0, 2).print();
     // print(t1);
     // rand<double>(3, new int[3]{2, 3, 4}).print();
