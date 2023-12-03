@@ -550,6 +550,89 @@ namespace ts {
 				for (int i = 0; i < size; ++i) result.data[i] = log(this->data[i]);
 				return result;
 			}
+
+			Tensor<T> sum(int dim) {
+				if (dim < 0 || dim >= this->dim) {
+					throw std::invalid_argument("step cannot be zero.");
+				} else 
+				if (dim == 0) {
+					int size = 1;
+					for (int i = 1; i < this->dim; ++i) {
+						size *= this->shape[i];
+					}
+					int *tmp_shape = new int[size];
+					for (int i = 1; i < this->dim; ++i) {
+						tmp_shape[i - 1] = this->shape[i];
+					}
+					Tensor<T> result(this->dim - 1, tmp_shape);
+					for (int i = 0; i < size; ++i) {
+						T cur = (T)0;
+						for (int j = 0; j < this->shape[0]; ++j) cur += this->data[i + j * size];
+						result.data[i] = cur; 
+					}
+					return result;
+				} else 
+				if (dim == this->dim - 1) {
+					int size = 1;
+					for (int i = 0; i < this->dim - 1; ++i) {
+						size *= this->shape[i];
+					}
+					int *tmp_shape = new int[size];
+					for (int i = 0; i < this->dim - 1; ++i) {
+						tmp_shape[i] = this->shape[i];
+					}
+					Tensor<T> result(this->dim - 1, tmp_shape);
+					for (int i = 0; i < size; ++i) {
+						T cur = (T)0; 
+						for (int j = 0; j < this->shape[this->dim - 1]; ++j) cur += this->data[i * this->shape[this->dim - 1] + j];
+						result.data[i] = cur;
+					}
+					return result;
+				} else {
+					int suf_size = 1, size = 1, pre_size = 1;
+					for (int i = dim + 1; i < this->dim; ++i) suf_size = suf_size * this->shape[i];
+					for (int i = 0; i < dim; ++i) pre_size = pre_size * this->shape[i];
+					for (int i = 0; i < this->dim; ++i) 
+						if (i != dim) size = size * this->shape[i];
+					int *tmp_shape = new int[size];
+					for (int i = 0; i < dim; ++i) tmp_shape[i] = this->shape[i];
+					for (int i = dim + 1; i < this->dim; ++i) tmp_shape[i - 1] = this->shape[i];
+					Tensor<T> result(this->dim - 1, tmp_shape);
+					for (int i = 0; i < pre_size; ++i) {
+						for (int j = 0; j < suf_size; ++j) {
+							T cur = (T)0;
+							for (int k = 0; k < this->shape[dim]; ++k) 
+								cur += this->data[i * suf_size * this->shape[dim] + k * suf_size + j];
+							result.data[i * suf_size + j] = cur;
+						}
+					}
+					return result;
+				}
+			}
+
+			T mean() {
+				int size = 1; 
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				T cur = (T)0;
+				for (int i = 0; i < size; ++i) cur = cur + this->data[i];
+				return cur / size;
+			}
+
+			T Min() {
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				T cur = this->shape[0];
+				for (int i = 1; i < size; ++i) if (this->data[i] < cur) cur = this->data[i];
+				return cur;
+			}
+
+			T Max() {
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				T cur = this->shape[0];
+				for (int i = 1; i < size; ++i) if (this->data[i] > cur) cur = this->data[i];
+				return cur;
+			}
 	};
 
 // Part 1: creation and initialization
@@ -840,85 +923,25 @@ namespace ts {
 
 	template <typename T>
 	Tensor<T> sum(Tensor<T> src, int dim) {
-		if (dim == 0) {
-			int size = 1;
-			for (int i = 1; i < src.dim; ++i) {
-				size *= src.shape[i];
-			}
-			int *tmp_shape = new int[size];
-			for (int i = 1; i < src.dim; ++i) {
-				tmp_shape[i - 1] = src.shape[i];
-			}
-			Tensor<T> result(src.dim - 1, tmp_shape);
-			for (int i = 0; i < size; ++i) {
-				T cur = (T)0;
-				for (int j = 0; j < src.shape[0]; ++j) cur += src.data[i + j * size];
-				result.data[i] = cur;
-			}
-			return result;
-		} else 
-		if (dim == src.dim) {
-			int size = 1;
-			for (int i = 0; i < src.dim - 1; ++i) {
-				size *= src.shape[i];
-			}
-			int *tmp_shape = new int[size];
-			for (int i = 0; i < src.dim - 1; ++i) {
-				tmp_shape[i] = src.shape[i];
-			}
-			Tensor<T> result(src.dim - 1, tmp_shape);
-			for (int i = 0; i < size; ++i) {
-				T cur = (T)0;
-				for (int j = 0; j < src.shape[src.dim - 1]; ++j) cur += src.data[i * src.shape[src.dim - 1] + j];
-				result.data[i] = cur;
-			}
-			return result;
-		} else {
-			int suf_size = 1, size = 1, pre_size = 1;
-			for (int i = dim + 1; i < src.dim; ++i) suf_size = suf_size * src.shape[i];
-			for (int i = 0; i < dim; ++i) pre_size = pre_size * src.shape[i];
-			for (int i = 0; i < src.dim; ++i) 
-				if (i != dim) size = size * src.shape[i];
-			int *tmp_shape = new int[size];
-			Tensor<T> result(src.dim - 1, tmp_shape);
-			for (int i = 0; i < pre_size; ++i) {
-				for (int j = 0; j < suf_size; ++j) {
-					for (int k = 0; k < src.shape[dim]; ++k) 
-					result.data[i * suf_size + j] += src.data[i * suf_size * src.shape[dim] + k * suf_size + j];
-				}
-			}
-			return result;
-		}
+		return src.sum(dim);
 	}
 	// Inplementation of Sum()
 
 	template <typename T>
 	T mean(Tensor<T> src) {
-		int size = 1;
-		for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-		T cur = (T)0;
-		for (int i = 0; i < size; ++i) cur = cur + src.data[i];
-		return cur / size;
+		return src.mean();
 	}
 	// Inplementation of Mean()
 
 	template <typename T>
-	T min(Tensor<T> src) {
-		int size = 1;
-		for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-		T cur = src.shape[0];
-		for (int i = 1; i < size; ++i) cur = min(src.data[i], cur);
-		return cur;
+	T Min(Tensor<T> src) {
+		return src.Min();
 	}
 	// Inplementation of Min()
 
 	template <typename T>
-	T max(Tensor<T> src) {
-		int size = 1;
-		for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-		T cur = src.shape[0];
-		for (int i = 1; i < size; ++i) cur = max(src.data[i], cur);
-		return cur;
+	T Max(Tensor<T> src) {
+		return src.Max();
 	}
 	// Inplementation of Max()
 
