@@ -60,22 +60,22 @@ int main() {
     // t4.print();
     // Tensor<int> t5(Div(t1, t2));
     // t5.print();
-    // Tensor<int> t1(3, new int[3]{2, 2, 2},
-    //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
-    // );
-    // Tensor<int> t3(t1.log(2));
-    // t3.print();
-    // Tensor<int> t4(log(t1, 2));
-    // t4.print();
     Tensor<int> t1(3, new int[3]{2, 2, 2},
-        new int[8]{11, 22, 333, 44, 5, 66, 7, 8}
-    );
-    Tensor<int> t2(3, new int[3]{2, 2, 2},
         new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
     );
-    Tensor<int> t3(t1.sum(1));
-    //t3.print();
-    Tensor<int> t4(sum(t1, 1));
+    Tensor<int> t3(t1.Log());
+    t3.print();
+    Tensor<int> t4(Log(t1));
+    t4.print();
+    // Tensor<int> t1(3, new int[3]{2, 2, 2},
+    //     new int[8]{11, 22, 333, 44, 5, 66, 7, 8}
+    // );
+    // Tensor<int> t2(3, new int[3]{2, 2, 2},
+    //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
+    // );
+    // Tensor<int> t3(t1.sum(1));
+    // //t3.print();
+    // Tensor<int> t4(sum(t1, 1));
     //t4.print();
     //printf("%d %d %d %d %d %d\n", t4.mean(), mean(t4), t4.Min(), t4.Max(), Min(t4), Max(t4));
     // t1.eq(t2).print(); (t1 == t2).print();

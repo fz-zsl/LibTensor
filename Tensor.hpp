@@ -1,5 +1,9 @@
 #include <iostream>
 #include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <vector>
+#include <set>
 
 namespace ts {
 	template <typename T>
@@ -547,7 +551,7 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = log(this->data[i]);
+				for (int i = 0; i < size; ++i) result.data[i] = std::log(this->data[i]);
 				return result;
 			}
 
@@ -1054,4 +1058,75 @@ namespace ts {
 		return src1.le(src2);
 	}
 	// Inplementation of le()
+	int Find_idx(int x) {
+		if (x <= 25) return x + 97; else return x + 65;
+	}
+	void Solve_Einsum_1(int x) {
+
+	}
+	void Solve_Einsum_2(int x) {
+		
+	} 
+	template <typename T>
+	Tensor<T> einsum(std::string s, Tensor<T> src1, Tensor<T> src2) {
+		using namespace std;
+		int fir_l, fir_r;
+		int sec_l, sec_r;
+		int Is_empty;
+		vector<int> A[200], B[200], com1[200], com2[200], obj[200];
+		vector<int> A_dim[200], B_dim[200], com1_dim[200], com2_dim[200], obj_dim[200];
+		set<int> Para_A, Para_B, Para_com;
+		for (int i = 0; i < s.length(); ++i) {
+			if (s[i] == '-') {
+				fir_l = 0; fir_r = i - 1;
+				sec_l = i + 2; sec_r = s.length() - 1;
+				break;
+			}
+		}
+		int flag = 0; int pos;
+		for (int i = fir_l; i <= fir_r; ++i) {
+			if (s[i] == ',') {
+				flag = 1; pos = i + 1; continue;
+			}
+			if (!flag) {
+				Para_A.insert(s[i]);
+			} else {
+				if (Para_com.find(s[i]) != Para_com.end()) continue;
+				if (Para_A.find(s[i]) != Para_A.end()) {
+					if (src1.shape[i] != src2.shape[i - pos]) {
+						throw invalid_argument("Unmatched dimention.");
+					}
+					Para_A.erase(s[i]); Para_com.insert(s[i]);
+				} else Para_B.insert(s[i]);
+			}
+		}
+		flag = 0; 
+		for (int i = fir_l; i <= fir_r; ++i) {
+			if (s[i] == ',') {
+				flag = 1; pos = i + 1; continue;
+			}
+			if (!flag) {
+				if (Para_com.find(s[i]) != Para_com.end()) {
+					com1[s[i]].push_back(i); com1_dim[s[i]].push_back(src1.shape[i]);
+				} else A[s[i]].push_back(i), A_dim[s[i]].push_back(src1.shape[i]);
+			} else {
+				if (Para_com.find(s[i]) != Para_com.end()) {
+					com2[s[i]].push_back(i - pos); com2_dim[s[i]].push_back(src2.shape[i]);
+				} else B[s[i]].push_back(i - pos), B_dim[s[i]].push_back(src2.shape[i]);
+			}
+		}
+		if (sec_l == sec_r) {
+			Is_empty = 1;
+		} else {
+			Is_empty = 0;
+			for (int i = sec_l; i <= sec_r; ++i) {
+				obj[s[i]].push_back(i - sec_l);
+			}
+		}
+		if (Is_empty) { // Sum up to a single number
+			Solve_Einsum_1(0);
+		} else {
+			Solve_Einsum_2(0);
+		}
+	}
 }
