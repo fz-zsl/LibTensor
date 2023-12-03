@@ -633,6 +633,78 @@ namespace ts {
 				for (int i = 1; i < size; ++i) if (this->data[i] > cur) cur = this->data[i];
 				return cur;
 			}
+
+			Tensor<bool> eq(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] == src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
+
+			Tensor<bool> ne(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] != src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
+
+			Tensor<bool> gt(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] > src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
+
+			Tensor<bool> ge(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] >= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
+
+			Tensor<bool> lt(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] < src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
+
+			Tensor<bool> le(Tensor<T> src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				Tensor<bool> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) 
+				if (this->data[i] <= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				return result;
+			}
 	};
 
 // Part 1: creation and initialization
@@ -949,79 +1021,37 @@ namespace ts {
 
 	template <typename T>
 	Tensor<bool> operator == (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] == src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.eq(src2);
 	}
 	// Inplementation of eq()
 
 	template <typename T>
 	Tensor<bool> operator != (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] != src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.ne(src2);
 	}
 	// Inplementation of ne()
 	
 	template <typename T>
 	Tensor<bool> operator > (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] > src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.gt(src2);
 	}
 	// Inplementation of gt()
 
 	template <typename T>
 	Tensor<bool> operator >= (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] >= src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.ge(src2);
 	}
 	// Inplementation of ge()
 
 	template <typename T>
 	Tensor<bool> operator < (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] < src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.lt(src2);
 	}
 	// Inplementation of lt()
 
 	template <typename T>
 	Tensor<bool> operator <= (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<bool> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) if (src1.data[i] <= src2.data[i]) result.data[i] = true; else result.data[i] = false;
-		return result;
+		return src1.le(src2);
 	}
 	// Inplementation of le()
 }

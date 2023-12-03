@@ -68,16 +68,28 @@ int main() {
     // Tensor<int> t4(log(t1, 2));
     // t4.print();
     Tensor<int> t1(3, new int[3]{2, 2, 2},
-        new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
+        new int[8]{11, 22, 333, 44, 5, 66, 7, 8}
     );
     Tensor<int> t2(3, new int[3]{2, 2, 2},
         new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
     );
     Tensor<int> t3(t1.sum(1));
-    t3.print();
+    //t3.print();
     Tensor<int> t4(sum(t1, 1));
-    t4.print();
-    printf("%d %d %d %d %d %d\n", t4.mean(), mean(t4), t4.Min(), t4.Max(), Min(t4), Max(t4));
+    //t4.print();
+    //printf("%d %d %d %d %d %d\n", t4.mean(), mean(t4), t4.Min(), t4.Max(), Min(t4), Max(t4));
+    // t1.eq(t2).print(); (t1 == t2).print();
+    // t3.eq(t4).print(); (t3 == t4).print(); 
+    // t1.ne(t2).print(); (t1 != t2).print();
+    // t3.ne(t4).print(); (t3 != t4).print(); 
+    // t1.gt(t2).print(); (t1 > t2).print();
+    // t3.gt(t4).print(); (t3 > t4).print();
+    // t1.ge(t2).print(); (t1 >= t2).print();
+    // t3.ge(t4).print(); (t3 >= t4).print(); 
+    // t1.lt(t2).print(); (t1 < t2).print();
+    // t3.lt(t4).print(); (t3 < t4).print(); 
+    // t1.le(t2).print(); (t1 <= t2).print();
+    // t3.le(t4).print(); (t3 <= t4).print(); 
     //t1.print();
     // t1.print(2, new int[2]{4, 6});
     //Tensor<int> t2(t1.slice(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}));
