@@ -4,18 +4,34 @@ using namespace ts;
 using namespace std;
 
 int main() {
-    Tensor<int> t1(3, new int[3]{2, 3, 4},
-        new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                    21, 22, 23, 24}
+    // Tensor<int> t1(3, new int[3]{2, 3, 4},
+    //     new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    //                 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    //                 21, 22, 23, 24}
+    // );
+    // Tensor<int> t2(3, new int[3]{2, 3, 4},
+    //     new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    //                 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    //                 21, 22, 23, 24}
+    // );
+    // Tensor<int> t3(t1.sub(t2));
+    // t3.print();
+    // Tensor<int> t4(t1 - t2);
+    // t4.print();
+    // Tensor<int> t5(sub(t1, t2));
+    // t5.print();
+    Tensor<int> t1(3, new int[3]{2, 2, 2},
+        new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
     );
-    Tensor<int> t2(3, new int[3]{2, 3, 4},
-        new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                    21, 22, 23, 24}
+    Tensor<int> t2(3, new int[3]{2, 2, 2},
+        new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
     );
-    Tensor<int> t3(t1.add(t2));
+    Tensor<int> t3(t1.Log());
     t3.print();
+    Tensor<int> t4(Log(t1));
+    t4.print();
+    // Tensor<int> t5(Div(t1, t2));
+    // t5.print();
     //t1.print();
     // t1.print(2, new int[2]{4, 6});
     //Tensor<int> t2(t1.slice(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}));

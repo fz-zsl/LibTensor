@@ -432,10 +432,124 @@ namespace ts {
 			}
 
 			Tensor<T> add(Tensor<T> src) {
-				
-				return this.Tensor(this->data) + src;
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("step cannot be zero.");
+				}
+				for (int i = 0; i < src.dim; ++i) 
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("step cannot be zero.");
+					}
+				Tensor<T> result(src.dim, src.shape);
+				int size = 1;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+				for (int i = 0; i < size; ++i) {
+					result.data[i] = src.data[i] + this->data[i];
+				}
+				return result;
 			}
 
+			Tensor<T> add(T src) {
+				Tensor<T> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] + src;
+				return result;
+			}
+
+			Tensor<T> sub(Tensor<T> src) {
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("step cannot be zero.");
+				}
+				for (int i = 0; i < src.dim; ++i) 
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("step cannot be zero.");
+					}
+				Tensor<T> result(src.dim, src.shape);
+				int size = 1;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+				for (int i = 0; i < size; ++i) {
+					result.data[i] = src.data[i] - this->data[i];
+				}
+				return result;
+			}
+
+			Tensor<T> sub(T src) {
+				Tensor<T> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] - src;
+				return result;
+			}
+
+			Tensor<T> mul(Tensor src) {
+				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				for (int i = 0; i < this->dim - 2; ++i) 
+					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
+					throw std::invalid_argument("step cannot be zero.");
+				}
+				int *tmp_shape = new int[this->dim];
+				for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
+				tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
+				Tensor<T> result(this->dim, tmp_shape);
+				int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
+				int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
+				int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
+				int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
+				for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
+				for (int i = 0; i < size; ++i) { 
+					for (int j = 0; j < row; ++j) {
+						for (int k = 0; k < col; ++k) {
+							T cur = (T)0;
+							for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
+								cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
+							result.data[i * base + j * col + k] = cur;
+						}
+					}
+				}
+				return result;
+			}
+
+			Tensor<T> mul(T src) {
+				Tensor<T> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] * src;
+				return result;
+			}
+
+			Tensor<T> Div(Tensor<T> src) {
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("step cannot be zero.");
+				}
+				for (int i = 0; i < src.dim; ++i) 
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("step cannot be zero.");
+					}
+				Tensor<T> result(src.dim, src.shape);
+				int size = 1;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+				for (int i = 0; i < size; ++i) {
+					result.data[i] = src.data[i] / this->data[i];
+				}
+				return result;
+			}
+
+			Tensor<T> Div(T src) {
+				Tensor<T> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] / src;
+				return result;
+			}
+
+			Tensor<T> Log() {
+				Tensor<T> result(this->dim, this->shape);
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
+				for (int i = 0; i < size; ++i) result.data[i] = log(this->data[i]);
+				return result;
+			}
 	};
 
 // Part 1: creation and initialization
@@ -638,118 +752,87 @@ namespace ts {
 
 	template <typename T>
 	Tensor<T> operator + (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) {
-			result.data[i] = src1.data[i] + src2.data[i];
-		}
-		return result;
+		return  src1.add(src2);
+	}
+	template <typename T>
+	Tensor<T> add(Tensor<T> src1, Tensor<T> src2) {
+		return src1.add(src2);
 	}
 	// Inplementation of Add() between 2 Tensor
 
 	template <typename T>
 	Tensor<T> operator + (Tensor<T> src1, T src2) {
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] + src2;
-		return result;
+		return src1.add(src2);
+	}
+	template <typename T>
+	Tensor<T> add(Tensor<T> src1, T src2) {
+		return src1.add(src2);
 	}
 	// Inplementation of Add() between a Tensor and a single prototype(int, float...)
 
 	template <typename T>
 	Tensor<T> operator - (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] - src2.data[i];
-		return result;
+		return  src1.sub(src2);
+	}
+	template <typename T>
+	Tensor<T> sub(Tensor<T> src1, Tensor<T> src2) {
+		return src1.sub(src2);
 	}
 	// Inplementation of Sub() between 2 Tensor
 
 	template <typename T>
 	Tensor<T> operator - (Tensor<T> src1, T src2) {
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] - src2;
-		return result;
+		return src1.sub(src2);
+	}
+	template <typename T>
+	Tensor<T> sub(Tensor<T> src1, T src2) {
+		return src1.sub(src2);
 	}
 	// Inplementation of Sub() between a Tensor and a single prototype(int, float...)
 
 	template <typename T>
 	Tensor<T> operator * (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim - 2; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		if (src1.shape[src1.dim - 1] != src2.shape[src2.dim - 2] || src1.shape[src1.dim - 2] != src2.shape[src2.dim - 1]) throw std::invalid_argument("step cannot be zero.");
-		int *tmp_shape = new int[src1.dim];
-		for (int i = 0; i < src1.dim - 1; ++i) tmp_shape[i] = src1.shape[i]; tmp_shape[src1.dim - 1] = src2.shape[src2.dim - 1];
-		Tensor<T> result(src1.dim, tmp_shape);
-		int base = src1.shape[src1.dim - 2] * src2.shape[src2.dim - 1];
-		int size = 1, row = src1.shape[src1.dim - 2], col = src2.shape[src2.dim - 1];
-		int base1 = src1.shape[src1.dim - 1] * src1.shape[src1.dim - 2];
-		int base2 = src2.shape[src2.dim - 1] * src2.shape[src2.dim - 2];
-		for (int i = 0; i < src1.dim - 2; ++i) size = size * src1.shape[i];
-		for (int i = 0; i < size; ++i) {
-			for (int j = 0; j < row; ++j) {
-				for (int k = 0; k < col; ++k) {
-					for (int l = 0; l < src1.shape[src1.dim - 1]; ++l)
-					result[i * base + j * col + k] += src1.data[i * base1 + j * src1.shape[src1.dim - 1] + l] * src2.data[i * base2 + l * src2.shape[src2.dim - 1] + k];
-				}
-			}
-		}
-		return result;
+		return src1.mul(src2);
+	}
+	template <typename T>
+	Tensor<T> mul(Tensor<T> src1, Tensor<T> src2) {
+		return src1.mul(src2);
 	}
 	// Inplementation of Sub() between 2 Tensor
 
 	template <typename T>
 	Tensor<T> operator * (Tensor<T> src1, T src2) {
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] * src2;
-		return result;
+		return src1.mul(src2);
+	}
+	template <typename T>
+	Tensor<T> mul(Tensor<T> src1, T src2) {
+		return src1.mul(src2);
 	}
 	// Inplementation of Sub() between a Tensor and a single prototype(int, float...)
 
 	template <typename T>
 	Tensor<T> operator / (Tensor<T> src1, Tensor<T> src2) {
-		if (src1.dim != src2.dim) throw std::invalid_argument("step cannot be zero.");
-		for (int i = 0; i < src1.dim; ++i) 
-			if (src1.shape[i] != src2.shape[i]) throw std::invalid_argument("step cannot be zero.");
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] / src2.data[i];
-		return result;
+		return  src1.Div(src2);
+	}
+	template <typename T>
+	Tensor<T> Div(Tensor<T> src1, Tensor<T> src2) {
+		return src1.Div(src2);
 	}
 	// Inplementation of Div() between 2 Tensor
 
 	template <typename T>
 	Tensor<T> operator / (Tensor<T> src1, T src2) {
-		Tensor<T> result(src1.dim, src1.shape);
-		int size = 1;
-		for (int i = 0; i < src1.dim; ++i) size *= src1.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = src1.data[i] / src2;
-		return result;
+		return src1.Div(src2);
+	}
+	template <typename T>
+	Tensor<T> Div(Tensor<T> src1, T src2) {
+		return src1.Div(src2);
 	}
 	// Inplementation of Div() between a Tensor and a single prototype(int, float...)
 
 	template <typename T>
-	Tensor<T> log(Tensor<T> src) {
-		Tensor<T> result(src.dim, src.shape);
-		int size = 1;
-		for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-		for (int i = 0; i < size; ++i) result.data[i] = log(src.data[i]);
-		return result;
+	Tensor<T> Log(Tensor<T> src) {
+		return src.Log();
 	}
 	// Inplementation of Log() with base of e
 
