@@ -60,13 +60,13 @@ int main() {
     // t4.print();
     // Tensor<int> t5(Div(t1, t2));
     // t5.print();
-    Tensor<int> t1(3, new int[3]{2, 2, 2},
-        new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
-    );
-    Tensor<int> t3(t1.Log());
-    t3.print();
-    Tensor<int> t4(Log(t1));
-    t4.print();
+    // Tensor<int> t1(3, new int[3]{2, 2, 2},
+    //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
+    // );
+    // Tensor<int> t3(t1.Log());
+    // t3.print();
+    // Tensor<int> t4(Log(t1));
+    // t4.print();
     // Tensor<int> t1(3, new int[3]{2, 2, 2},
     //     new int[8]{11, 22, 333, 44, 5, 66, 7, 8}
     // );
@@ -101,7 +101,7 @@ int main() {
     // t1.modify(new pair<int, int>[3]{make_pair(0, 2), make_pair(2, 3), make_pair(2, 4)}, t4);
     // t1.print();
     // t1.permute(new int[3]{2, 0, 1}).print();
-    //t1.transpose(1, 2).print();
+    // t1.transpose(1, 2).print();
     // t1.transpose(0, 2).print();
     // print(t1);
     // rand<double>(3, new int[3]{2, 3, 4}).print();
@@ -114,5 +114,19 @@ int main() {
     // incrange<int>(1, 10, 3).print();
     // Tensor<int> t1(1, new int[1]{3}, new int[3]{1, 2, 3});
     // t1.print();
+    // Tensor<bool> t1(3, new int[3]{2, 2, 2},
+    //     new bool[8]{true, false, true, false, true, false, true, false}
+    // );
+    // t1.print();
+    // print(t1);
+    // Tensor<bool> t2(1, new int[1]{8},
+    //     new bool[8]{true, false, true, false, true, false, true, false}
+    // );
+    // t2.print();
+    // print(t2);
+    // Tensor<int> t4(3, new int[3]{2, 2, 2},
+    //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
+    // );
+    // t4.print();
     return 0;
 }

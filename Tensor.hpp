@@ -374,9 +374,11 @@ namespace ts {
 				if (newDim == 1) {
 					printf("tensor([");
 					for (int i = 0; i < newShape[0]; ++i) {
-						printf("%5g%s",
-							(double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", "
-						);
+						if (typeid(T) == typeid(bool)) {
+							printf("%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
+						} else {
+							printf("%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
+						}
 					}
 					puts("");
 					return;
@@ -400,10 +402,17 @@ namespace ts {
 						printf("[");
 					}
 					for (int k = 0; k < newShape[newDim - 1]; ++k) {
-						printf("%5g%s",
-							(double)(this->data[i * newShape[newDim - 1] + k]),
-							k == newShape[newDim - 1] - 1 ? "]" : ", "
-						);
+						if (typeid(T) == typeid(bool)) {
+							printf("%s%s",
+								this->data[i * newShape[newDim - 1] + k] ? " True" : "False",
+								k == newShape[newDim - 1] - 1 ? "]" : ", "
+							);
+						} else {
+							printf("%5g%s",
+								(double)(this->data[i * newShape[newDim - 1] + k]),
+								k == newShape[newDim - 1] - 1 ? "]" : ", "
+							);
+						}
 					}
 					int carryCnt = 1;
 					++newIdx[newDim - 2];
