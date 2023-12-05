@@ -69,6 +69,73 @@ namespace ts {
 				}
 			}
 
+			Tensor(FILE* input) {
+				if (input == nullptr) {
+					throw std::invalid_argument("input is a NULL pointer.");
+				}
+				// read the whole file
+				std::vector<char> buffer;
+				char ch;
+				while ((ch = fgetc(input)) != EOF) {
+					if (ch != '\n' && ch != '\r' && ch != '\t' && ch != ' ') {
+						buffer.push_back(ch);
+					}
+				}
+				buffer.push_back('\0');
+				std::string str(buffer.begin(), buffer.end());
+				if (str.substr(0, 7) != "tensor(") {
+					throw std::invalid_argument("Please input a tensor.");
+				}
+				// get dim
+				dim = 0;
+				while (str[dim + 7] == '[') {
+					++dim;
+				}
+				// get shape
+				int cntComma = 0;
+				shape = new int[dim]{};
+				for (int i = 8; i < str.size(); ++i) {
+					int conseq = 0;
+					while (str[i - conseq] == ']') {
+						++conseq;
+					}
+					if (!shape[conseq - 1]) {
+						shape[conseq - 1] = cntComma + 1;
+					}
+					if (str[i] == ',') {
+						++cntComma;
+					}
+				}
+				int size = shape[dim - 1];
+				for (int i = dim - 1; i; --i) {
+					shape[i] /= shape[i - 1];
+				}
+				// get data
+				int pos = 0;
+				data = new T[size]{};
+				for (int i = 0; i < size; ++i) {
+					if (str[pos] < '0' || str[pos] > '9') {
+						++pos;
+						--i;
+						continue;
+					}
+					data[i] = 0;
+					while (str[pos] >= '0' && str[pos] <= '9') {
+						data[i] = data[i] * 10 + str[pos] - '0';
+						++pos;
+					}
+					if (str[pos] == '.') {
+						++pos;
+						double weight = 0.1;
+						while (str[pos] >= '0' && str[pos] <= '9') {
+							data[i] += weight * (str[pos] - '0');
+							weight *= 0.1;
+							++pos;
+						}
+					}
+				}
+			}
+
 			~Tensor() {
 				dim = -1;
 				delete[] shape;
@@ -93,12 +160,12 @@ namespace ts {
 						range[i].second = range[i].first + 1;
 					}
 					if (range[i].first < 0 || range[i].first >= this->shape[i]) {
-						char message[50];
+						char message[50] = "Left bound out of range.";
 						//sprintf(message, "Left bound of dimension %d out of range.", i);
 						throw std::invalid_argument(message);
 					}
 					if (range[i].second <= range[i].first || range[i].second > this->shape[i]) {
-						char message[50];
+						char message[50] = "Right bound out of range.";
 						//sprintf(message, "Right bound of dimension %d out of range.", i);
 						throw std::invalid_argument(message);
 					}
@@ -227,12 +294,12 @@ namespace ts {
 						range[i].second = range[i].first + 1;
 					}
 					if (range[i].first < 0 || range[i].first >= this->shape[i]) {
-						char message[50];
+						char message[50] = "Left bound out of range.";;
 						//sprintf(message, "Left bound of dimension %d out of range.", i);
 						throw std::invalid_argument(message);
 					}
 					if (range[i].second <= range[i].first || range[i].second > this->shape[i]) {
-						char message[50];
+						char message[50] = "Right bound out of range.";
 						//sprintf(message, "Right bound of dimension %d out of range.", i);
 						throw std::invalid_argument(message);
 					}
@@ -360,7 +427,7 @@ namespace ts {
 				return this->permute(order);
 			}
 
-			void print(int newDim, int newShape[]) {
+			void print(int newDim, int newShape[], FILE* out = stdout, bool printShape = false) {
 				int oldSize = 1, newSize = 1;
 				for (int i = 0; i < this->dim; ++i) {
 					oldSize *= this->shape[i];
@@ -372,15 +439,20 @@ namespace ts {
 					throw std::runtime_error("Fail to print tensor (different size).");
 				}
 				if (newDim == 1) {
-					printf("tensor([");
+					fprintf(out, "tensor([");
 					for (int i = 0; i < newShape[0]; ++i) {
+						if (printShape && newShape[0] > 7 && i == 3) {
+							fprintf(out, " ... , ");
+							i = newShape[0] - 3;
+							continue;
+						}
 						if (typeid(T) == typeid(bool)) {
-							printf("%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
+							fprintf(out, "%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
 						} else {
-							printf("%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
+							fprintf(out, "%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
 						}
 					}
-					puts("");
+					fprintf(out, "\n");
 					return;
 				}
 				newSize /= newShape[newDim - 1];
@@ -388,60 +460,89 @@ namespace ts {
 				for (int i = 0; i < newDim; ++i) {
 					newIdx[i] = 0;
 				}
+				std::string cdots = "\n       ";
+				bool needCdots = false;
+				for (int i = 0; i <= dim; ++i) {
+					cdots += " ";
+				}
+				cdots += " ...  \n\n";
 				for (int i = 0, j; i < newSize; ++i) {
-					printf("%s", i ? "       " : "tensor(");
+					fprintf(out, "%s", i ? "       " : "tensor(");
 					for (j = this->dim - 2; j >= 0; --j) {
 						if (newIdx[j] != 0) {
 							break;
 						}
 					}
 					for (int k = 0; k <= j; ++k) {
-						printf(" ");
+						fprintf(out, " ");
 					}
 					for (int k = j + 1; k < this->dim; ++k) {
-						printf("[");
+						fprintf(out, "[");
 					}
 					for (int k = 0; k < newShape[newDim - 1]; ++k) {
+						if (printShape && newShape[newDim - 1] > 7 && k == 3) {
+							fprintf(out, " ... , ");
+							k = newShape[newDim - 1] - 3;
+							continue;
+						}
 						if (typeid(T) == typeid(bool)) {
-							printf("%s%s",
+							fprintf(out, "%s%s",
 								this->data[i * newShape[newDim - 1] + k] ? " True" : "False",
 								k == newShape[newDim - 1] - 1 ? "]" : ", "
 							);
 						} else {
-							printf("%5g%s",
+							fprintf(out, "%5g%s",
 								(double)(this->data[i * newShape[newDim - 1] + k]),
 								k == newShape[newDim - 1] - 1 ? "]" : ", "
 							);
 						}
 					}
 					int carryCnt = 1;
-					++newIdx[newDim - 2];
+					if (printShape && newShape[newDim - 2] > 7 && newIdx[newDim - 2] == 2) {
+						i += newShape[newDim - 2] - 5;
+						newIdx[newDim - 2] = newShape[newDim - 2] - 2;
+						// printf("%d\n", newShape[newDim - 1]);
+						needCdots = true;
+					}
+					else {
+						++newIdx[newDim - 2];
+					}
 					for (int k = newDim - 2; k > 0; --k) {
 						if (newIdx[k] == newShape[k]) {
 							newIdx[k] = 0;
-							++newIdx[k - 1];
+							if (printShape && newShape[k - 1] > 5 && newIdx[k - 1] == 2) {
+								needCdots = true;
+								newIdx[k - 1] = newShape[k - 1] - 2;
+							}
+							else {
+								++newIdx[k - 1];
+							}
 							++carryCnt;
 						}
 					}
 					for (int k = 1; k < carryCnt; ++k) {
-						printf("]");
+						fprintf(out, "]");
 					}
 					if (i != newSize - 1) {
-						printf(",");
+						fprintf(out, ",");
 						for (int k = 0; k < carryCnt; ++k) {
-							puts("");
+							fprintf(out, "\n");
 						}
 					}
 					else {
-						puts(")");
+						fprintf(out, "])\n");
+					}
+					if (needCdots) {
+						fprintf(out, "%s", cdots.c_str());
+						needCdots = false;
 					}
 				}
 				delete[] newIdx;
 				return;
 			}
 
-			void print() {
-				return this->print(this->dim, this->shape);
+			void print(FILE* out = stdout, bool printShape = false) {
+				return this->print(this->dim, this->shape, out, printShape);
 			}
 
 			Tensor<T> add(Tensor<T> src) {
@@ -904,15 +1005,15 @@ namespace ts {
 	}
 
 	template <typename T>
-	void print(Tensor<T> src, int newDim, int newShape[]) {
+	void print(Tensor<T> src, int newDim, int newShape[], FILE* out = stdout, bool printShape = false) {
 		// print a tensor in given shape
-		return src.print(newDim, newShape);
+		return src.print(newDim, newShape, out, printShape);
 	}
 
 	template <typename T>
-	void print(Tensor<T> src) {
+	void print(Tensor<T> src, FILE* out = stdout, bool printShape = false) {
 		// print a tensor in original shape
-		return src.print();
+		return src.print(out, printShape);
 	}
 
 //	Part 3: Mathematical Operations

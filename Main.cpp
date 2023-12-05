@@ -124,9 +124,17 @@ int main() {
     // );
     // t2.print();
     // print(t2);
-    // Tensor<int> t4(3, new int[3]{2, 2, 2},
-    //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
-    // );
-    // t4.print();
+    int *arr = new int[512];
+    for (int i = 0; i < 512; i++) {
+        arr[i] = i;
+    }
+    FILE *fout = fopen("test.txt", "w");
+    Tensor<int> t4(3, new int[3]{8, 8, 8}, arr);
+    t4.print(fout, 0);
+    fclose(fout);
+    FILE *fin = fopen("test.txt", "r");
+    Tensor<int> t5(fin);
+    t5.print();
+    fclose(fin);
     return 0;
 }
