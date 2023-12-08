@@ -649,30 +649,44 @@ namespace ts {
 			}
 
 			Tensor<T> mul(Tensor src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim - 2; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
+				// if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				// for (int i = 0; i < this->dim - 2; ++i) 
+				// 	if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				// if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
+				// 	throw std::invalid_argument("step cannot be zero.");
+				// }
+				// int *tmp_shape = new int[this->dim];
+				// for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
+				// tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
+				// Tensor<T> result(this->dim, tmp_shape);
+				// int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
+				// int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
+				// int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
+				// int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
+				// for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
+				// for (int i = 0; i < size; ++i) { 
+				// 	for (int j = 0; j < row; ++j) {
+				// 		for (int k = 0; k < col; ++k) {
+				// 			T cur = (T)0;
+				// 			for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
+				// 				cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
+				// 			result.data[i * base + j * col + k] = cur;
+				// 		}
+				// 	}
+				// }
+				// return result;
+				if (src.dim != this->dim) {
 					throw std::invalid_argument("step cannot be zero.");
 				}
-				int *tmp_shape = new int[this->dim];
-				for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
-				tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
-				Tensor<T> result(this->dim, tmp_shape);
-				int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
-				int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
-				int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
-				int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
-				for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
-				for (int i = 0; i < size; ++i) { 
-					for (int j = 0; j < row; ++j) {
-						for (int k = 0; k < col; ++k) {
-							T cur = (T)0;
-							for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
-								cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
-							result.data[i * base + j * col + k] = cur;
-						}
+				for (int i = 0; i < src.dim; ++i) 
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("step cannot be zero.");
 					}
+				Tensor<T> result(src.dim, src.shape);
+				int size = 1;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+				for (int i = 0; i < size; ++i) {
+					result.data[i] = src.data[i] * this->data[i];
 				}
 				return result;
 			}
@@ -788,7 +802,7 @@ namespace ts {
 			T Min() {
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->shape[0];
+				T cur = this->data[0];
 				for (int i = 1; i < size; ++i) if (this->data[i] < cur) cur = this->data[i];
 				return cur;
 			}
@@ -796,7 +810,7 @@ namespace ts {
 			T Max() {
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->shape[0];
+				T cur = this->data[0];
 				for (int i = 1; i < size; ++i) if (this->data[i] > cur) cur = this->data[i];
 				return cur;
 			}
