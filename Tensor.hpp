@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <algorithm>
 #include <cstring>
@@ -12,6 +13,7 @@ namespace ts {
 			int dim;
 			int *shape;
 			T *data;
+			std::string outputBuf;
 
 		public:
 			Tensor(int src_dim, int src_shape[]) {
@@ -30,6 +32,7 @@ namespace ts {
 				}
 				data = new T[size];
 				for (int i = 0; i < size; ++i) data[i] = (T)0;
+				outputBuf = "";
 			}
 
 			Tensor(int src_dim, int src_shape[], T *src_data) {
@@ -53,6 +56,7 @@ namespace ts {
 				for (int i = 0; i < size; ++i) {
 					data[i] = src_data[i];
 				}
+				outputBuf = "";
 			}
 
 			Tensor(const Tensor<T>& src) {
@@ -67,6 +71,7 @@ namespace ts {
 				for (int i = 0; i < size; ++i) {
 					data[i] = src.data[i];
 				}
+				outputBuf = "";
 			}
 
 			Tensor(FILE* input) {
@@ -134,6 +139,17 @@ namespace ts {
 						}
 					}
 				}
+				outputBuf = "";
+			}
+
+			Tensor<T> load(std::string filename) {
+				FILE* input = fopen(filename.c_str(), "r");
+				if (input == nullptr) {
+					throw std::invalid_argument("Cannot open file.");
+				}
+				Tensor<T> result(input);
+				fclose(input);
+				return result;
 			}
 
 			~Tensor() {
@@ -427,8 +443,24 @@ namespace ts {
 				return this->permute(order);
 			}
 
-			void print(int newDim, int newShape[], FILE* out = stdout, bool printShape = false) {
+			std::ostream& appendBuffer(std::ostream& ost, std::string str) {
+				outputBuf += str;
+				if (outputBuf.size() > 1000000000) {
+					ost << outputBuf;
+					outputBuf = "";
+				}
+				return ost;
+			}
+
+			std::ostream& flushBuffer(std::ostream& ost) {
+				ost << outputBuf;
+				outputBuf = "";
+				return ost;
+			}
+
+			std::ostream& print(int newDim, int newShape[], std::ostream& ost = std::cout, bool printShape = false) {
 				int oldSize = 1, newSize = 1;
+				static char tmp[100000000];
 				for (int i = 0; i < this->dim; ++i) {
 					oldSize *= this->shape[i];
 				}
@@ -439,21 +471,24 @@ namespace ts {
 					throw std::runtime_error("Fail to print tensor (different size).");
 				}
 				if (newDim == 1) {
-					fprintf(out, "tensor([");
+					appendBuffer(ost, "tensor([");
 					for (int i = 0; i < newShape[0]; ++i) {
 						if (printShape && newShape[0] > 7 && i == 3) {
-							fprintf(out, " ... , ");
+							appendBuffer(ost, " ... , ");
 							i = newShape[0] - 3;
 							continue;
 						}
 						if (typeid(T) == typeid(bool)) {
-							fprintf(out, "%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
+							sprintf(tmp, "%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
+							appendBuffer(ost, tmp);
 						} else {
-							fprintf(out, "%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
+							sprintf(tmp, "%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
+							appendBuffer(ost, tmp);
 						}
 					}
-					fprintf(out, "\n");
-					return;
+					appendBuffer(ost, "\n");
+					flushBuffer(ost);
+					return ost;
 				}
 				newSize /= newShape[newDim - 1];
 				int *newIdx = new int[newDim];
@@ -467,34 +502,37 @@ namespace ts {
 				}
 				cdots += " ...  \n\n";
 				for (int i = 0, j; i < newSize; ++i) {
-					fprintf(out, "%s", i ? "       " : "tensor(");
+					sprintf(tmp, "%s", i ? "       " : "tensor(");
+					appendBuffer(ost, tmp);
 					for (j = this->dim - 2; j >= 0; --j) {
 						if (newIdx[j] != 0) {
 							break;
 						}
 					}
 					for (int k = 0; k <= j; ++k) {
-						fprintf(out, " ");
+						appendBuffer(ost, " ");
 					}
 					for (int k = j + 1; k < this->dim; ++k) {
-						fprintf(out, "[");
+						appendBuffer(ost, "[");
 					}
 					for (int k = 0; k < newShape[newDim - 1]; ++k) {
 						if (printShape && newShape[newDim - 1] > 7 && k == 3) {
-							fprintf(out, " ... , ");
+							appendBuffer(ost, " ... , ");
 							k = newShape[newDim - 1] - 3;
 							continue;
 						}
 						if (typeid(T) == typeid(bool)) {
-							fprintf(out, "%s%s",
+							sprintf(tmp, "%s%s",
 								this->data[i * newShape[newDim - 1] + k] ? " True" : "False",
 								k == newShape[newDim - 1] - 1 ? "]" : ", "
 							);
+							appendBuffer(ost, tmp);
 						} else {
-							fprintf(out, "%5g%s",
+							sprintf(tmp, "%5g%s",
 								(double)(this->data[i * newShape[newDim - 1] + k]),
 								k == newShape[newDim - 1] - 1 ? "]" : ", "
 							);
+							appendBuffer(ost, tmp);
 						}
 					}
 					int carryCnt = 1;
@@ -521,28 +559,43 @@ namespace ts {
 						}
 					}
 					for (int k = 1; k < carryCnt; ++k) {
-						fprintf(out, "]");
+						appendBuffer(ost, "]");
 					}
 					if (i != newSize - 1) {
-						fprintf(out, ",");
+						appendBuffer(ost, ",");
 						for (int k = 0; k < carryCnt; ++k) {
-							fprintf(out, "\n");
+							appendBuffer(ost, "\n");
 						}
 					}
 					else {
-						fprintf(out, "])\n");
+						appendBuffer(ost, "])\n");
 					}
 					if (needCdots) {
-						fprintf(out, "%s", cdots.c_str());
+						appendBuffer(ost, cdots);
 						needCdots = false;
 					}
 				}
 				delete[] newIdx;
-				return;
+				flushBuffer(ost);
+				return ost;
 			}
 			
-			void print(FILE* out = stdout, bool printShape = false) {
-				return this->print(this->dim, this->shape, out, printShape);
+			std::ostream& print(std::ostream& ost = std::cout, bool printShape = false) {
+				return this->print(this->dim, this->shape, ost, printShape);
+			}
+
+			void save(std::string filename) {
+				std::ofstream fout(filename, std::ios::out);
+				if (!fout) {
+					throw std::invalid_argument("Cannot open file.");
+				}
+				std::ostream& ost = fout;
+				print(ost, false);
+				return;
+			}
+
+			friend std::ostream& operator<<(std::ostream& ost, Tensor<T> src) {
+				return src.print(ost, false);
 			}
 
 			Tensor<T> add(Tensor<T> src) {
@@ -1002,6 +1055,12 @@ namespace ts {
 	Tensor<T> permute(Tensor<T> src, int src_order[]) {
 		// permute the tensor with the given order
 		return src.permute(src_order);
+	}
+
+	template <typename T>
+	void load(Tensor<T> src, const char* filename) {
+		// load the tensor from the given file
+		return src.load(filename);
 	}
 
 	template <typename T>

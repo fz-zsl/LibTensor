@@ -129,8 +129,8 @@ int main() {
         arr[i] = i;
     }
     FILE *fout = fopen("test.txt", "w");
-    Tensor<int> t4(8, new int[9]{8, 8, 8, 8, 8, 8, 8, 8}, arr);
-    t4.print(fout, 0);
+    Tensor<int> t4(2, new int[2]{8, 8}, arr);
+    t4.save("test.txt");
     fclose(fout);
     //FILE *fin = fopen("test.txt", "r");
     //Tensor<int> t5(fin);
