@@ -540,7 +540,7 @@ namespace ts {
 				delete[] newIdx;
 				return;
 			}
-
+			
 			void print(FILE* out = stdout, bool printShape = false) {
 				return this->print(this->dim, this->shape, out, printShape);
 			}
