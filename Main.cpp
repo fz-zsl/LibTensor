@@ -14,9 +14,11 @@ int main() {
     //                 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     //                 21, 22, 23, 24}
     // );
-    // Tensor<int> t3(t1.add(t2));
+    // Tensor<int> t3(t1.add(1));
+    // puts("t3:");
     // t3.print();
     // Tensor<int> t4(t1 + t2);
+    // puts("t4:");
     // t4.print();
     // Tensor<int> t5(add(t1, t2));
     // t5.print();
@@ -74,10 +76,10 @@ int main() {
     //     new int[8]{1, 2, 3, 4, 5, 6, 7, 8}
     // );
     // Tensor<int> t3(t1.sum(1));
-    // //t3.print();
+    // t3.print();
     // Tensor<int> t4(sum(t1, 1));
-    //t4.print();
-    //printf("%d %d %d %d %d %d\n", t4.mean(), mean(t4), t4.Min(), t4.Max(), Min(t4), Max(t4));
+    // t4.print();
+    // printf("mean = %d mean = %d min = %d maxn = %d min = %d max = %d\n", t4.mean(), mean(t4), t4.Min(), t4.Max(), Min(t4), Max(t4));
     // t1.eq(t2).print(); (t1 == t2).print();
     // t3.eq(t4).print(); (t3 == t4).print(); 
     // t1.ne(t2).print(); (t1 != t2).print();
@@ -124,14 +126,14 @@ int main() {
     // );
     // t2.print();
     // print(t2);
-    int *arr = new int[512 * 512 * 64];
-    for (int i = 0; i < 512 * 512 * 64; i++) {
-        arr[i] = i;
-    }
-    FILE *fout = fopen("test.txt", "w");
-    Tensor<int> t4(2, new int[2]{8, 8}, arr);
-    t4.save("test.txt");
-    fclose(fout);
+    // int *arr = new int[512 * 512 * 64];
+    // for (int i = 0; i < 512 * 512 * 64; i++) {
+    //     arr[i] = i;
+    // }
+    // FILE *fout = fopen("test.txt", "w");
+    // Tensor<int> t4(2, new int[2]{8, 8}, arr);
+    // t4.save("test.txt");
+    // fclose(fout);
     //FILE *fin = fopen("test.txt", "r");
     //Tensor<int> t5(fin);
     //t5.print();

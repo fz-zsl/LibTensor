@@ -1,3 +1,5 @@
+#define CMZ_TENSOR_HPP
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -5,6 +7,9 @@
 #include <cstring>
 #include <vector>
 #include <set>
+#include </opt/homebrew/Cellar/libomp/17.0.6/include/omp.h>
+#include </opt/homebrew/Cellar/libomp/17.0.6/include/ompt.h>
+#include </opt/homebrew/Cellar/libomp/17.0.6/include/omp-tools.h>
 
 namespace ts {
 	template <typename T>
@@ -458,6 +463,19 @@ namespace ts {
 				return ost;
 			}
 
+			#ifdef CMZ_TENSOR_HPP
+			std::ostream& print(int newDim, int newShape[], std::ostream& ost = std::cout, bool printShape = false) {
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) {
+					size *= this->shape[i];
+				}
+				for (int i = 0; i < size; ++i) {
+					ost << this->data[i] << " ";
+				}
+				ost << std::endl;
+				return ost;
+			}
+			#else
 			std::ostream& print(int newDim, int newShape[], std::ostream& ost = std::cout, bool printShape = false) {
 				int oldSize = 1, newSize = 1;
 				static char tmp[100000000];
@@ -579,6 +597,7 @@ namespace ts {
 				flushBuffer(ost);
 				return ost;
 			}
+			#endif
 			
 			std::ostream& print(std::ostream& ost = std::cout, bool printShape = false) {
 				return this->print(this->dim, this->shape, ost, printShape);
@@ -608,9 +627,16 @@ namespace ts {
 					}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] + this->data[i];
+				for (int i = 1; i < src.dim; ++i) size *= src.shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < src.shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = src.data[i * size + j] + this->data[i * size + j]; 
+					}
 				}
 				return result;
 			}
@@ -618,8 +644,17 @@ namespace ts {
 			Tensor<T> add(T src) {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] + src;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = this->data[i * size + j] + src; 
+					}
+				}
 				return result;
 			}
 
@@ -633,9 +668,16 @@ namespace ts {
 					}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] - this->data[i];
+				for (int i = 1; i < src.dim; ++i) size *= src.shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < src.shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = src.data[i * size + j] - this->data[i * size + j]; 
+					}
 				}
 				return result;
 			}
@@ -643,35 +685,71 @@ namespace ts {
 			Tensor<T> sub(T src) {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] - src;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = this->data[i * size + j] - src; 
+					}
+				}
 				return result;
 			}
 
 			Tensor<T> mul(Tensor src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim - 2; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
+				// if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
+				// for (int i = 0; i < this->dim - 2; ++i) 
+				// 	if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
+				// if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
+				// 	throw std::invalid_argument("step cannot be zero.");
+				// }
+				// int *tmp_shape = new int[this->dim];
+				// for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
+				// tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
+				// Tensor<T> result(this->dim, tmp_shape);
+				// int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
+				// int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
+				// int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
+				// int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
+				// for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
+				// omp_set_dynamic(0);
+				// #pragma omp parallel default(shared) num_threads(8) 
+				// {
+				// 	int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+				// 	for (int i = 0; i < size; ++i) { 
+				// 		if (i % numThreads != id) continue;
+				// 		for (int j = 0; j < row; ++j) {
+				// 			for (int k = 0; k < col; ++k) {
+				// 				T cur = (T)0;
+				// 				for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
+				// 					cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
+				// 				result.data[i * base + j * col + k] = cur;
+				// 			}
+				// 		}
+				// 	}
+				// }
+				// return result;
+				if (src.dim != this->dim) {
 					throw std::invalid_argument("step cannot be zero.");
 				}
-				int *tmp_shape = new int[this->dim];
-				for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
-				tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
-				Tensor<T> result(this->dim, tmp_shape);
-				int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
-				int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
-				int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
-				int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
-				for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
-				for (int i = 0; i < size; ++i) { 
-					for (int j = 0; j < row; ++j) {
-						for (int k = 0; k < col; ++k) {
-							T cur = (T)0;
-							for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
-								cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
-							result.data[i * base + j * col + k] = cur;
-						}
+				for (int i = 0; i < src.dim; ++i) 
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("step cannot be zero.");
+					}
+				Tensor<T> result(src.dim, src.shape);
+				int size = 1;
+				for (int i = 1; i < src.dim; ++i) size *= src.shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < src.shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = src.data[i * size + j] * this->data[i * size + j]; 
 					}
 				}
 				return result;
@@ -680,8 +758,17 @@ namespace ts {
 			Tensor<T> mul(T src) {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] * src;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = this->data[i * size + j] * src; 
+					}
+				}
 				return result;
 			}
 
@@ -695,9 +782,16 @@ namespace ts {
 					}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] / this->data[i];
+				for (int i = 1; i < src.dim; ++i) size *= src.shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < src.shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = src.data[i * size + j] / this->data[i * size + j]; 
+					}
 				}
 				return result;
 			}
@@ -705,16 +799,34 @@ namespace ts {
 			Tensor<T> Div(T src) {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] / src;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = this->data[i * size + j] / src; 
+					}
+				}
 				return result;
 			}
 
 			Tensor<T> Log() {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = std::log(this->data[i]);
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							result.data[i * size + j] = std::log(this->data[i * size + j]);; 
+					}
+				}
 				return result;
 			}
 
@@ -765,12 +877,17 @@ namespace ts {
 					for (int i = 0; i < dim; ++i) tmp_shape[i] = this->shape[i];
 					for (int i = dim + 1; i < this->dim; ++i) tmp_shape[i - 1] = this->shape[i];
 					Tensor<T> result(this->dim - 1, tmp_shape);
-					for (int i = 0; i < pre_size; ++i) {
-						for (int j = 0; j < suf_size; ++j) {
-							T cur = (T)0;
-							for (int k = 0; k < this->shape[dim]; ++k) 
-								cur += this->data[i * suf_size * this->shape[dim] + k * suf_size + j];
-							result.data[i * suf_size + j] = cur;
+					#pragma omp parallel default(shared) num_threads(8) 
+					{
+						int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+						for (int i = 0; i < pre_size; ++i) {
+							if (i % numThreads != id) continue;
+							for (int j = 0; j < suf_size; ++j) {
+								T cur = (T)0;
+								for (int k = 0; k < this->shape[dim]; ++k) 
+									cur += this->data[i * suf_size * this->shape[dim] + k * suf_size + j];
+								result.data[i * suf_size + j] = cur;
+							}
 						}
 					}
 					return result;
@@ -778,26 +895,50 @@ namespace ts {
 			}
 
 			T mean() {
-				int size = 1; 
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = (T)0;
-				for (int i = 0; i < size; ++i) cur = cur + this->data[i];
-				return cur / size;
+				int size = 1; 	T cur = (T)0;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							cur = cur + this->data[i * size + j];
+					}
+				}
+				return cur / size / this->shape[0];
 			}
 
 			T Min() {
-				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->shape[0];
-				for (int i = 1; i < size; ++i) if (this->data[i] < cur) cur = this->data[i];
+				int size = 1; 	T cur = this->data[0];
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							if (this->data[i * size + j] < cur) cur = this->data[i * size + j];
+					}
+				}
 				return cur;
 			}
 
 			T Max() {
-				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->shape[0];
-				for (int i = 1; i < size; ++i) if (this->data[i] > cur) cur = this->data[i];
+				int size = 1; 	T cur = this->data[0];
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads();
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+							if (this->data[i * size + j] > cur) cur = this->data[i * size + j];
+					}
+				}
 				return cur;
 			}
 
@@ -807,9 +948,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] == src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] == src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 
@@ -819,9 +968,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] != src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] != src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 
@@ -831,9 +988,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] > src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] > src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 
@@ -843,9 +1008,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] >= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] >= src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 
@@ -855,9 +1028,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] < src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] < src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 
@@ -867,9 +1048,17 @@ namespace ts {
 					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
 				Tensor<bool> result(this->dim, this->shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] <= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 1; i < this->dim; ++i) size *= this->shape[i];
+				omp_set_dynamic(0);
+				#pragma omp parallel default(shared) num_threads(8) 
+				{
+					int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+					for (int i = 0; i < this->shape[0]; ++i) {
+						if (i % numThreads != id) continue;
+						for (int j = 0; j < size; ++j) 
+						if (this->data[i * size + j] <= src.data[i * size + j]) result.data[i * size + j] = true; else result.data[i * size + j] = false;
+					}
+				}
 				return result;
 			}
 	};
