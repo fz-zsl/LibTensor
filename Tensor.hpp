@@ -6,6 +6,234 @@
 #include <vector>
 #include <set>
 
+#define CUDA_CALL(call) \
+do { \
+    cudaError_t err = call; \
+    if (err != cudaSuccess) { \
+        fprintf(stderr, "CUDA error in file '%s' in line %i: %s.\n", \
+                __FILE__, __LINE__, cudaGetErrorString(err)); \
+        exit(EXIT_FAILURE); \
+    } \
+} while (0)
+
+#define threadsPerBlock 256
+
+// CUDA Kernels begin
+template <typename T>
+__global__ void addKernel(T* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] + src2[i];
+	}
+	return;
+}
+
+template <typename T>
+__global__ void addKernel(T* result, T* src1, T src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] + src2;
+	}
+	return;
+}
+
+template <typename T>
+__global__ void subKernel(T* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] - src2[i];
+	}
+	return;
+}
+
+template <typename T>
+__global__ void subKernel(T* result, T* src1, T src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] - src2;
+	}
+	return;
+}
+
+template <typename T>
+__global__ void mulKernel(T* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] * src2[i];
+	}
+	return;
+}
+
+template <typename T>
+__global__ void mulKernel(T* result, T* src1, T src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] * src2;
+	}
+	return;
+}
+
+template <typename T>
+__global__ void divKernel(T* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] / src2[i];
+	}
+	return;
+}
+
+template <typename T>
+__global__ void divKernel(T* result, T* src1, T src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = src1[i] / src2;
+	}
+	return;
+}
+
+template <typename T>
+__global__ void logKernel(T* result, T* src, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = std::log((double)src[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void sumKernel(T* result, T* src, int size, int shape0, int shape1) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		int idx0 = i / shape0 / shape1;
+		// int idx1 = i / shape1 % shape0;
+		int idx2 = i % shape1;
+		atomicAdd(&result[idx0 * shape1 + idx2], src[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void meanKernel(T* result, T* src, int size) {
+	extern __shared__ T sdata[];
+	unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		sdata[tid] = src[i];
+	}
+	else {
+		sdata[tid] = 0;
+	}
+	__syncthreads();
+	for (unsigned int s = blockDim.x / 2; s; s >>= 1) {
+        if (tid < s) {
+            sdata[tid] += sdata[tid + s];
+        }
+        __syncthreads();
+    }
+	if (!tid) result[blockIdx.x] = sdata[0];
+	return;
+}
+
+template <typename T>
+__global__ void minKernel(T* result, T* src, int size) {
+	extern __shared__ T sdata[];
+	unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		sdata[tid] = src[i];
+	}
+	else {
+		sdata[tid] = src[0];
+	}
+	__syncthreads();
+	for (unsigned int s = blockDim.x / 2; s; s >>= 1) {
+        if (tid < s && sdata[tid] > sdata[tid + s]) {
+            sdata[tid] = sdata[tid + s];
+        }
+        __syncthreads();
+    }
+	if (!tid) result[blockIdx.x] = sdata[0];
+	return;
+}
+
+template <typename T>
+__global__ void maxKernel(T* result, T* src, int size) {
+	extern __shared__ T sdata[];
+	unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		sdata[tid] = src[i];
+	}
+	else {
+		sdata[tid] = src[0];
+	}
+	__syncthreads();
+	for (unsigned int s = blockDim.x / 2; s; s >>= 1) {
+        if (tid < s && sdata[tid] < sdata[tid + s]) {
+            sdata[tid] = sdata[tid + s];
+        }
+        __syncthreads();
+    }
+	if (!tid) result[blockIdx.x] = sdata[0];
+	return;
+}
+
+template <typename T>
+__global__ void eqKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] == src2[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void neKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] != src2[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void gtKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] > src2[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void geKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] >= src2[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void ltKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] < src2[i]);
+	}
+	return;
+}
+
+template <typename T>
+__global__ void leKernel(bool* result, T* src1, T* src2, int size) {
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i < size) {
+		result[i] = (src1[i] <= src2[i]);
+	}
+	return;
+}
+
+// CUDA Kernels end
+
 namespace ts {
 	template <typename T>
 	class Tensor {
@@ -600,18 +828,35 @@ namespace ts {
 
 			Tensor<T> add(Tensor<T> src) {
 				if (src.dim != this->dim) {
-					throw std::invalid_argument("step cannot be zero.");
+					throw std::invalid_argument("Error!");
 				}
-				for (int i = 0; i < src.dim; ++i) 
+				for (int i = 0; i < src.dim; ++i) {
 					if (src.shape[i] != this->shape[i]) {
-						throw std::invalid_argument("step cannot be zero.");
+						throw std::invalid_argument("Error!");
 					}
+				}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
 				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] + this->data[i];
-				}
+
+				T *data_ths, *data_src, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				addKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_src, data_ths, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
@@ -619,24 +864,56 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] + src;
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				addKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<T> sub(Tensor<T> src) {
 				if (src.dim != this->dim) {
-					throw std::invalid_argument("step cannot be zero.");
+					throw std::invalid_argument("Error!");
 				}
-				for (int i = 0; i < src.dim; ++i) 
+				for (int i = 0; i < src.dim; ++i) {
 					if (src.shape[i] != this->shape[i]) {
-						throw std::invalid_argument("step cannot be zero.");
+						throw std::invalid_argument("Error!");
 					}
+				}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
 				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] - this->data[i];
-				}
+
+				T *data_ths, *data_src, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				subKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_src, data_ths, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
@@ -644,50 +921,56 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] - src;
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				subKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
-			Tensor<T> mul(Tensor src) {
-				// if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				// for (int i = 0; i < this->dim - 2; ++i) 
-				// 	if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				// if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
-				// 	throw std::invalid_argument("step cannot be zero.");
-				// }
-				// int *tmp_shape = new int[this->dim];
-				// for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
-				// tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
-				// Tensor<T> result(this->dim, tmp_shape);
-				// int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
-				// int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
-				// int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
-				// int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
-				// for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
-				// for (int i = 0; i < size; ++i) { 
-				// 	for (int j = 0; j < row; ++j) {
-				// 		for (int k = 0; k < col; ++k) {
-				// 			T cur = (T)0;
-				// 			for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
-				// 				cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
-				// 			result.data[i * base + j * col + k] = cur;
-				// 		}
-				// 	}
-				// }
-				// return result;
+			Tensor<T> mul(Tensor<T> src) {
 				if (src.dim != this->dim) {
-					throw std::invalid_argument("step cannot be zero.");
+					throw std::invalid_argument("Error!");
 				}
-				for (int i = 0; i < src.dim; ++i) 
+				for (int i = 0; i < src.dim; ++i) {
 					if (src.shape[i] != this->shape[i]) {
-						throw std::invalid_argument("step cannot be zero.");
+						throw std::invalid_argument("Error!");
 					}
+				}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
 				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] * this->data[i];
-				}
+
+				T *data_ths, *data_src, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				mulKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_src, data_ths, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
@@ -695,24 +978,56 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] * src;
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				mulKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<T> Div(Tensor<T> src) {
 				if (src.dim != this->dim) {
-					throw std::invalid_argument("step cannot be zero.");
+					throw std::invalid_argument("Error!");
 				}
-				for (int i = 0; i < src.dim; ++i) 
+				for (int i = 0; i < src.dim; ++i) {
 					if (src.shape[i] != this->shape[i]) {
-						throw std::invalid_argument("step cannot be zero.");
+						throw std::invalid_argument("Error!");
 					}
+				}
 				Tensor<T> result(src.dim, src.shape);
 				int size = 1;
 				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
-				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] / this->data[i];
-				}
+
+				T *data_ths, *data_src, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				divKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_src, data_ths, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
@@ -720,7 +1035,22 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = this->data[i] / src;
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				divKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
@@ -728,163 +1058,368 @@ namespace ts {
 				Tensor<T> result(this->dim, this->shape);
 				int size = 1;
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) result.data[i] = std::log(this->data[i]);
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				logKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<T> sum(int dim) {
 				if (dim < 0 || dim >= this->dim) {
-					throw std::invalid_argument("step cannot be zero.");
-				} else 
-				if (dim == 0) {
-					int size = 1;
-					for (int i = 1; i < this->dim; ++i) {
-						size *= this->shape[i];
-					}
-					int *tmp_shape = new int[size];
-					for (int i = 1; i < this->dim; ++i) {
-						tmp_shape[i - 1] = this->shape[i];
-					}
-					Tensor<T> result(this->dim - 1, tmp_shape);
-					for (int i = 0; i < size; ++i) {
-						T cur = (T)0;
-						for (int j = 0; j < this->shape[0]; ++j) cur += this->data[i + j * size];
-						result.data[i] = cur; 
-					}
-					return result;
-				} else 
-				if (dim == this->dim - 1) {
-					int size = 1;
-					for (int i = 0; i < this->dim - 1; ++i) {
-						size *= this->shape[i];
-					}
-					int *tmp_shape = new int[size];
-					for (int i = 0; i < this->dim - 1; ++i) {
-						tmp_shape[i] = this->shape[i];
-					}
-					Tensor<T> result(this->dim - 1, tmp_shape);
-					for (int i = 0; i < size; ++i) {
-						T cur = (T)0; 
-						for (int j = 0; j < this->shape[this->dim - 1]; ++j) cur += this->data[i * this->shape[this->dim - 1] + j];
-						result.data[i] = cur;
-					}
-					return result;
-				} else {
-					int suf_size = 1, size = 1, pre_size = 1;
-					for (int i = dim + 1; i < this->dim; ++i) suf_size = suf_size * this->shape[i];
-					for (int i = 0; i < dim; ++i) pre_size = pre_size * this->shape[i];
-					for (int i = 0; i < this->dim; ++i) 
-						if (i != dim) size = size * this->shape[i];
-					int *tmp_shape = new int[size];
-					for (int i = 0; i < dim; ++i) tmp_shape[i] = this->shape[i];
-					for (int i = dim + 1; i < this->dim; ++i) tmp_shape[i - 1] = this->shape[i];
-					Tensor<T> result(this->dim - 1, tmp_shape);
-					for (int i = 0; i < pre_size; ++i) {
-						for (int j = 0; j < suf_size; ++j) {
-							T cur = (T)0;
-							for (int k = 0; k < this->shape[dim]; ++k) 
-								cur += this->data[i * suf_size * this->shape[dim] + k * suf_size + j];
-							result.data[i * suf_size + j] = cur;
-						}
-					}
-					return result;
+					throw std::invalid_argument("Error!");
 				}
+				int shape0 = 1, shape1 = this->shape[dim], shape2 = 1, size = 1;
+				for (int i = dim - 1; i > dim; --i) shape0 *= this->shape[i];
+				shape2 = shape0;
+				for (int i = dim; ~i; --i) shape0 *= this->shape[i];
+				size = shape0;
+				shape0 = shape0 / shape1 / shape2;
+				int *newShape = new int[this->dim - 1];
+				for (int i = 0; i < dim; ++i) newShape[i] = this->shape[i];
+				for (int i = dim + 1; i < this->dim; ++i) newShape[i - 1] = this->shape[i];
+				Tensor<T> result(this->dim - 1, newShape);
+				delete[] newShape;
+
+				T *data_ths, *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size / shape1 * sizeof(T)));
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				sumKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, size, shape1, shape2);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size / shape1 * sizeof(T), cudaMemcpyDeviceToHost));
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+
+				return result;
 			}
 
 			T mean() {
 				int size = 1; 
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = (T)0;
-				for (int i = 0; i < size; ++i) cur = cur + this->data[i];
-				return cur / size;
+
+				T *data_ths, *data_res, *partial_sum;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				size_t sharedMemSize = threadsPerBlock * sizeof(T);
+				CUDA_CALL(cudaMalloc(&data_res, blocksPerGrid * sizeof(T)));
+				meanKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(data_res, data_ths, size);
+				CUDA_CALL(cudaDeviceSynchronize());
+				partial_sum = new T[blocksPerGrid];
+				CUDA_CALL(cudaMemcpy(partial_sum, data_res, blocksPerGrid * sizeof(T), cudaMemcpyDeviceToHost));
+				T total_sum = (T)0;
+				for (int i = 0; i < blocksPerGrid; ++i) {
+					total_sum += partial_sum[i];
+				}
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				delete[] partial_sum;
+				
+				return total_sum / size;
 			}
 
 			T Min() {
-				int size = 1;
+				int size = 1; 
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->data[0];
-				for (int i = 1; i < size; ++i) if (this->data[i] < cur) cur = this->data[i];
-				return cur;
+
+				T *data_ths, *data_res, *block_ans;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				size_t sharedMemSize = threadsPerBlock * sizeof(T);
+				CUDA_CALL(cudaMalloc(&data_res, blocksPerGrid * sizeof(T)));
+				minKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(data_res, data_ths, size);
+				CUDA_CALL(cudaDeviceSynchronize());
+				block_ans = new T[blocksPerGrid];
+				CUDA_CALL(cudaMemcpy(block_ans, data_res, blocksPerGrid * sizeof(T), cudaMemcpyDeviceToHost));
+				T ans = block_ans[0];
+				for (int i = 0; i < blocksPerGrid; ++i) {
+					ans = std::min(ans, block_ans[i]);
+				}
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				delete[] block_ans;
+				
+				return ans;
 			}
 
 			T Max() {
-				int size = 1;
+				int size = 1; 
 				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				T cur = this->data[0];
-				for (int i = 1; i < size; ++i) if (this->data[i] > cur) cur = this->data[i];
-				return cur;
+
+				T *data_ths, *data_res, *block_ans;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				size_t sharedMemSize = threadsPerBlock * sizeof(T);
+				CUDA_CALL(cudaMalloc(&data_res, blocksPerGrid * sizeof(T)));
+				maxKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(data_res, data_ths, size);
+				CUDA_CALL(cudaDeviceSynchronize());
+				block_ans = new T[blocksPerGrid];
+				CUDA_CALL(cudaMemcpy(block_ans, data_res, blocksPerGrid * sizeof(T), cudaMemcpyDeviceToHost));
+				T ans = block_ans[0];
+				for (int i = 0; i < blocksPerGrid; ++i) {
+					ans = std::max(ans, block_ans[i]);
+				}
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_res));
+				delete[] block_ans;
+				
+				return ans;
 			}
 
 			Tensor<bool> eq(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] == src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				eqKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<bool> ne(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] != src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				neKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<bool> gt(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] > src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				gtKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<bool> ge(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] >= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				geKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<bool> lt(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] < src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				ltKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
 			}
 
 			Tensor<bool> le(Tensor<T> src) {
-				if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				for (int i = 0; i < this->dim; ++i) 
-					if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				Tensor<bool> result(this->dim, this->shape);
+				if (src.dim != this->dim) {
+					throw std::invalid_argument("Error!");
+				}
+				for (int i = 0; i < src.dim; ++i) {
+					if (src.shape[i] != this->shape[i]) {
+						throw std::invalid_argument("Error!");
+					}
+				}
+				Tensor<bool> result(src.dim, src.shape);
 				int size = 1;
-				for (int i = 0; i < this->dim; ++i) size *= this->shape[i];
-				for (int i = 0; i < size; ++i) 
-				if (this->data[i] <= src.data[i]) result.data[i] = true; else result.data[i] = false;
+				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
+
+				T *data_ths, *data_src;
+				bool *data_res;
+				CUDA_CALL(cudaMalloc(&data_ths, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_src, size * sizeof(T)));
+				CUDA_CALL(cudaMalloc(&data_res, size)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaMemcpy(data_ths, this->data, size * sizeof(T), cudaMemcpyHostToDevice));
+				CUDA_CALL(cudaMemcpy(data_src, src.data, size * sizeof(T), cudaMemcpyHostToDevice));
+				
+				int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
+				leKernel<<<blocksPerGrid, threadsPerBlock>>>(data_res, data_ths, data_src, size);
+				CUDA_CALL(cudaGetLastError());
+
+				CUDA_CALL(cudaMemcpy(result.data, data_res, size, cudaMemcpyDeviceToHost)); // sizeof(bool) = 1
+
+				CUDA_CALL(cudaFree(data_ths));
+				CUDA_CALL(cudaFree(data_src));
+				CUDA_CALL(cudaFree(data_res));
+				
 				return result;
+			}
+
+			Tensor& operator=(const Tensor<T>& src) {
+				if (this == &src) {
+					return *this;
+				}
+				if (this->dim != src.dim) {
+					throw std::runtime_error("Fail to assign (different dimension).");
+				}
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) {
+					if (this->shape[i] != src.shape[i]) {
+						throw std::runtime_error("Fail to assign (different shape).");
+					}
+					size *= this->shape[i];
+				}
+				for (int i = 0; i < size; ++i) {
+					this->data[i] = src.data[i];
+				}
+				return *this;
 			}
 	};
 
@@ -1241,75 +1776,4 @@ namespace ts {
 		return src1.le(src2);
 	}
 	// Inplementation of le()
-	int Find_idx(int x) {
-		if (x <= 25) return x + 97; else return x + 65;
-	}
-	void Solve_Einsum_1(int x) {
-
-	}
-	void Solve_Einsum_2(int x) {
-		
-	} 
-	template <typename T>
-	Tensor<T> einsum(std::string s, Tensor<T> src1, Tensor<T> src2) {
-		using namespace std;
-		int fir_l, fir_r;
-		int sec_l, sec_r;
-		int Is_empty;
-		vector<int> A[200], B[200], com1[200], com2[200], obj[200];
-		vector<int> A_dim[200], B_dim[200], com1_dim[200], com2_dim[200], obj_dim[200];
-		set<int> Para_A, Para_B, Para_com;
-		for (int i = 0; i < s.length(); ++i) {
-			if (s[i] == '-') {
-				fir_l = 0; fir_r = i - 1;
-				sec_l = i + 2; sec_r = s.length() - 1;
-				break;
-			}
-		}
-		int flag = 0; int pos;
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
-			}
-			if (!flag) {
-				Para_A.insert(s[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) continue;
-				if (Para_A.find(s[i]) != Para_A.end()) {
-					if (src1.shape[i] != src2.shape[i - pos]) {
-						throw invalid_argument("Unmatched dimention.");
-					}
-					Para_A.erase(s[i]); Para_com.insert(s[i]);
-				} else Para_B.insert(s[i]);
-			}
-		}
-		flag = 0; 
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
-			}
-			if (!flag) {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com1[s[i]].push_back(i); com1_dim[s[i]].push_back(src1.shape[i]);
-				} else A[s[i]].push_back(i), A_dim[s[i]].push_back(src1.shape[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com2[s[i]].push_back(i - pos); com2_dim[s[i]].push_back(src2.shape[i]);
-				} else B[s[i]].push_back(i - pos), B_dim[s[i]].push_back(src2.shape[i]);
-			}
-		}
-		if (sec_l == sec_r) {
-			Is_empty = 1;
-		} else {
-			Is_empty = 0;
-			for (int i = sec_l; i <= sec_r; ++i) {
-				obj[s[i]].push_back(i - sec_l);
-			}
-		}
-		if (Is_empty) { // Sum up to a single number
-			Solve_Einsum_1(0);
-		} else {
-			Solve_Einsum_2(0);
-		}
-	}
 }
