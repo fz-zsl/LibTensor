@@ -1,4 +1,4 @@
-#define CMZ_TENSOR_HPP
+//#define CMZ_TENSOR_HPP
 
 #include <iostream>
 #include <fstream>

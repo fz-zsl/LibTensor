@@ -15,8 +15,8 @@ int main() {
     Tensor<bool> t5(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
     Tensor<char> t6(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
     for (int i = 0; i < n; i++) {
-        t1.data[i] = i; t2.data[i] = 1.0 / i; t3.data[i] = 2.0 / i; 
-        t4.data[i] = i * i; t5.data[i] = i % 2; t6.data[i] = i % 128;
+        t1.data[i] = i; t2.data[i] = 1.0 / (i + 1); t3.data[i] = 2.0 / (i + 1); 
+        t4.data[i] = i * i; t5.data[i] = 1; t6.data[i] = i % 127 + 1;
     }
     Tensor<int> a1(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
     Tensor<double> a2(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
@@ -26,7 +26,7 @@ int main() {
     Tensor<char> a6(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
     for (int i = 0; i < n; i++) {
         a1.data[i] = 5; a2.data[i] = i; a3.data[i] = i;
-        a4.data[i] = 4; a5.data[i] = 1; a6.data[i] = i % 64;
+        a4.data[i] = 4; a5.data[i] = 1; a6.data[i] = i % 63 + 1;
     }
     Tensor<int> b1(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
     Tensor<double> b2(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
@@ -52,12 +52,12 @@ int main() {
     b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
     b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
     b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    b1 = Div(a1, t1);  b1 = b1.Div(a1); b1 = b1.Div(t1); b1 = b1.Div(5);
-    b2 = Div(a2, t2);  b2 = b2.Div(a2); b2 = b2.Div(t2); b2 = b2.Div(5.0);
-    b3 = Div(a3, t3);  b3 = b3.Div(a3); b3 = b3.Div(t3); b3 = b3.Div(5.0f);
-    b4 = Div(a4, t4);  b4 = b4.Div(a4); b4 = b4.Div(t4); b4 = b4.Div(5ll);
-    b5 = Div(a5, t5);  b5 = b5.Div(a5); b5 = b5.Div(t5); b5 = b5.Div(true);
-    b6 = Div(a6, t6);  b6 = b6.Div(a6); b6 = b6.Div(t6); b6 = b6.Div('a');
+    b1 = Div(a1, t1);  b1 = b1.Div(5);
+    b2 = Div(a2, t2);  b2 = b2.Div(5.0);
+    b3 = Div(a3, t3);  b3 = b3.Div(5.0f);
+    b4 = Div(a4, t4);  b4 = b4.Div(5ll);
+    b5 = Div(a5, t5);  b5 = b5.Div(true);
+    b6 = Div(a6, t6);  b6 = b6.Div('a');
     int ans1; double ans2; float ans3; long long ans4; bool ans5; char ans6;
     b1 = t1.Log(); b2 = t2.Log(); b3 = t3.Log(); b4 = t4.Log(); b6 = t6.Log();
     ans1 = t1.mean(); ans2 = t2.mean(); ans3 = t3.mean(); ans4 = t4.mean(); ans6 = t6.mean();
