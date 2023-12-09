@@ -1,3 +1,5 @@
+#define CMZ_TENSOR_HPP
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -458,6 +460,19 @@ namespace ts {
 				return ost;
 			}
 
+			#ifdef CMZ_TENSOR_HPP
+			std::ostream& print(int newDim, int newShape[], std::ostream& ost = std::cout, bool printShape = false) {
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) {
+					size *= this->shape[i];
+				}
+				for (int i = 0; i < size; ++i) {
+					ost << this->data[i] << " ";
+				}
+				ost << std::endl;
+				return ost;
+			}
+			#else
 			std::ostream& print(int newDim, int newShape[], std::ostream& ost = std::cout, bool printShape = false) {
 				int oldSize = 1, newSize = 1;
 				static char tmp[100000000];
@@ -579,6 +594,7 @@ namespace ts {
 				flushBuffer(ost);
 				return ost;
 			}
+			#endif
 			
 			std::ostream& print(std::ostream& ost = std::cout, bool printShape = false) {
 				return this->print(this->dim, this->shape, ost, printShape);
