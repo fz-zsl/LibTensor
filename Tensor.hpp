@@ -886,6 +886,26 @@ namespace ts {
 				if (this->data[i] <= src.data[i]) result.data[i] = true; else result.data[i] = false;
 				return result;
 			}
+
+			Tensor& operator=(const Tensor<T>& src) {
+				if (this == &src) {
+					return *this;
+				}
+				if (this->dim != src.dim) {
+					throw std::runtime_error("Fail to assign (different dimension).");
+				}
+				int size = 1;
+				for (int i = 0; i < this->dim; ++i) {
+					if (this->shape[i] != src.shape[i]) {
+						throw std::runtime_error("Fail to assign (different shape).");
+					}
+					size *= this->shape[i];
+				}
+				for (int i = 0; i < size; ++i) {
+					this->data[i] = src.data[i];
+				}
+				return *this;
+			}
 	};
 
 // Part 1: creation and initialization
