@@ -4,11 +4,14 @@ using namespace ts;
 using namespace std;
 
 int main() {
-    Tensor<int> t1(3, new int[3]{8, 8, 8}, new int[512]);
-    for (int i = 0; i < 512; i++) {
-        t1.data[i] = i;
-    }
-    t1.sum(2).print();
+    // Tensor<int> t1(3, new int[3]{8, 8, 8}, new int[512]);
+    // for (int i = 0; i < 512; i++) {
+    //     t1.data[i] = i;
+    // }
+    // Tensor<int> t2(2, new int[2]{8, 8}, new int[64]);
+    // t1.sum(2).print();
+    // t2 = t1.sum(2);
+    // t2.print();
     // Tensor<int> t1(3, new int[3]{2, 3, 4},
     //     new int[24]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     //                 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
