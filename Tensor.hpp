@@ -176,12 +176,23 @@ namespace ts {
 				return str;
 			}
 
-			T getVal(int idx[]) {
+			T getVal(int idx[]) const {
 				int pos = 0, size = 1;
 				for (int i = dim - 1; i >= 0; --i) {
 					pos += (idx[i] % shape[i]) * size;
+					size *= shape[i];
 				}
 				return data[pos];
+			}
+
+			void setVal(int idx[], T val) {
+				int pos = 0, size = 1;
+				for (int i = dim - 1; i >= 0; --i) {
+					pos += (idx[i] % shape[i]) * size;
+					size *= shape[i];
+				}
+				// printf("set:%d \n",pos);
+				data[pos] = val;
 			}
 			
 			Tensor<T> slice(std::pair<int,int> range[]) {
@@ -483,7 +494,7 @@ namespace ts {
 					size *= this->shape[i];
 				}
 				for (int i = 0; i < size; ++i) {
-					ost << this->data[i] << " ";
+					ost << std::setw(5) << this->data[i] << " ";
 				}
 				ost << std::endl;
 				return ost;
@@ -513,7 +524,7 @@ namespace ts {
 							sprintf(tmp, "%s%s", this->data[i] ? " True" : "False", i == newShape[0] - 1 ? "])" : ", ");
 							appendBuffer(ost, tmp);
 						} else {
-							sprintf(tmp, "%5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
+							sprintf(tmp, "%5.5g%s", (double)(this->data[i]), i == newShape[0] - 1 ? "])" : ", ");
 							appendBuffer(ost, tmp);
 						}
 					}
@@ -559,7 +570,7 @@ namespace ts {
 							);
 							appendBuffer(ost, tmp);
 						} else {
-							sprintf(tmp, "%5g%s",
+							sprintf(tmp, "%5.5g%s",
 								(double)(this->data[i * newShape[newDim - 1] + k]),
 								k == newShape[newDim - 1] - 1 ? "]" : ", "
 							);
@@ -1293,75 +1304,108 @@ namespace ts {
 		return src1.le(src2);
 	}
 	// Inplementation of le()
-	int Find_idx(int x) {
-		if (x <= 25) return x + 97; else return x + 65;
-	}
-	void Solve_Einsum_1(int x) {
-
-	}
-	void Solve_Einsum_2(int x) {
-		
-	} 
+	
 	template <typename T>
-	Tensor<T> einsum(std::string s, Tensor<T> src1, Tensor<T> src2) {
-		using namespace std;
-		int fir_l, fir_r;
-		int sec_l, sec_r;
-		int Is_empty;
-		vector<int> A[200], B[200], com1[200], com2[200], obj[200];
-		vector<int> A_dim[200], B_dim[200], com1_dim[200], com2_dim[200], obj_dim[200];
-		set<int> Para_A, Para_B, Para_com;
-		for (int i = 0; i < s.length(); ++i) {
-			if (s[i] == '-') {
-				fir_l = 0; fir_r = i - 1;
-				sec_l = i + 2; sec_r = s.length() - 1;
-				break;
-			}
+	void DO(Tensor<T>* res,T pre,int* Map,std::string s,int now,int* Now,int* R,const Tensor<T>& X) {
+		int p=0;
+		int len=X.dim;
+		int* Lim=(int*)malloc(len<<2);
+		while(s[now]!='-'){
+			Lim[p]=Now[Map[s[now]-'a']];
+			++p,++now;
 		}
-		int flag = 0; int pos;
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
-			}
-			if (!flag) {
-				Para_A.insert(s[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) continue;
-				if (Para_A.find(s[i]) != Para_A.end()) {
-					if (src1.shape[i] != src2.shape[i - pos]) {
-						throw invalid_argument("Unmatched dimention.");
-					}
-					Para_A.erase(s[i]); Para_com.insert(s[i]);
-				} else Para_B.insert(s[i]);
-			}
+		pre*=X.getVal(Lim);
+		now+=2;
+		int len1=s.size()-now;
+		int* Pre=(int*)malloc(len1<<2);
+		for(int i=now;i<s.size();++i)Pre[i-now]=Now[Map[s[i]-'a']];
+		// printf("DO: %d %d %d\n",pre,Pre[0],Pre[1]);
+		pre+=res->getVal(Pre);
+		res->setVal(Pre,pre);
+		free(Lim),free(Pre);
+	}
+	
+	template <typename T, typename ... Args>
+	void DO(Tensor<T>* res,T pre,int* Map,std::string s,int now,int* Now,int* R,const Tensor<T>& X, const Args&... A) {
+		int p=0;
+		int len=X.dim;
+		// printf("DO__: %d\n",now);
+		int* Lim=(int*)malloc(len<<2);
+		while(s[now]!=','){
+			Lim[p]=Now[Map[s[now]-'a']];
+			++p,++now;
 		}
-		flag = 0; 
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
-			}
-			if (!flag) {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com1[s[i]].push_back(i); com1_dim[s[i]].push_back(src1.shape[i]);
-				} else A[s[i]].push_back(i), A_dim[s[i]].push_back(src1.shape[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com2[s[i]].push_back(i - pos); com2_dim[s[i]].push_back(src2.shape[i]);
-				} else B[s[i]].push_back(i - pos), B_dim[s[i]].push_back(src2.shape[i]);
-			}
+		DO(res,pre*X.getVal(Lim),Map,s,now+1,Now,R,A...);
+		free(Lim);
+	}
+
+	template <typename T, typename ... Args>
+	void Pre_do(Tensor<T>* res,int* Map,int& sz,std::string s,int now,int* Now,int* R,const Args&... A) {
+		if(now>=sz)return DO(res,(T)1,Map,s,0,Now,R,A...);
+		// printf("Pre_do: %d\n",now);
+		for(int i=0;i<R[now];++i){
+			Now[now]=i;
+			// printf("pre:%d %d\n",now,i);
+			Pre_do(res,Map,sz,s,now+1,Now,R,A...);
 		}
-		if (sec_l == sec_r) {
-			Is_empty = 1;
-		} else {
-			Is_empty = 0;
-			for (int i = sec_l; i <= sec_r; ++i) {
-				obj[s[i]].push_back(i - sec_l);
+	}
+	
+	template <typename T>
+	Tensor<T>* slipt(int* Map,int& sz,std::string s,int now,int* R,const Tensor<T>& X) {
+		int p=0;
+			// printf("%d %d\n",Map[8],X.shape[p]);
+		
+		while(s[now]!='-'){
+			// printf("%d %d\n",Map[s[now]-'a'],X.shape[p]);
+
+			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
+			if(R[Map[s[now]-'a']]!=X.shape[p]){
+				// printf("%d %d\n",R[Map[s[now]-'a']],X.shape[p]);
+				// fflush(stdout);
+				throw std::invalid_argument("Unmatched dimention.3");
 			}
+			++p,++now;
 		}
-		if (Is_empty) { // Sum up to a single number
-			Solve_Einsum_1(0);
-		} else {
-			Solve_Einsum_2(0);
+		now+=2;
+		int len=s.size()-now;
+		int* Lim=(int*)malloc(len<<2);
+		for(int i=now;i<s.size();++i)Lim[i-now]=R[Map[s[i]-'a']];
+		Tensor<T>* res=new Tensor<T>(len,Lim);
+		free(Lim);
+		return res;
+	}
+	
+	template <typename T, typename ... Args>
+	Tensor<T>* slipt(int* Map,int& sz,std::string s,int now,int* R,const Tensor<T>& X, const Args&... A) {
+		int p=0;
+
+		while(s[now]!=','){
+			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
+			// printf("?%d %d %d %d\n",Map[s[now]-'a'],now,sz,X.shape[p]);
+			// fflush(stdout);
+			if(R[Map[s[now]-'a']]!=X.shape[p])throw std::invalid_argument("Unmatched dimention.2");
+			++p,++now;
 		}
+		return slipt(Map,sz,s,now+1,R,A...);
+	}
+
+	template <typename T, typename ... Args>
+	Tensor<T>* einsum(std::string s, const Tensor<T>& X, const Args&... A) {
+		int cnt=0,m=s.size(),f=0;
+		int n=sizeof...(A)+1;
+		for(int i=0;i<m;++i)cnt+=s[i]==',';
+		if(m&&s[0]!='-')++cnt;
+		if(cnt!=n)throw std::invalid_argument("Unmatched dimention.1");
+		int* Map=(int*)malloc(26<<2);
+		std::memset(Map,-1,26<<2);
+		int sz=0;
+		int* Now=(int*)malloc((m+1)<<2);
+		int* R=(int*)malloc((m+1)<<2);
+		// printf("slipt_start\n");
+		Tensor<T>* res=slipt(Map,sz,s,0,R,X,A...);
+		// printf("Pre_do_start\n");
+		Pre_do(res,Map,sz,s,0,Now,R,X,A...);
+		free(Map),free(Now),free(R);
+		return res;
 	}
 }

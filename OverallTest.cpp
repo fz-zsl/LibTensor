@@ -4,148 +4,47 @@
 #include <chrono>
 using namespace ts;
 using namespace std;
-
+// int A[10];
 int main() {
-    // auto start = chrono::high_resolution_clock::now();
-    // int n = 16777216;
-    // Tensor<int> t1(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<double> t2(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<float> t3(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<long long> t4(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<bool> t5(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<char> t6(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // for (int i = 0; i < n; i++) {
-    //     t1.data[i] = i; t2.data[i] = 1.0 / (i + 1); t3.data[i] = 2.0 / (i + 1); 
-    //     t4.data[i] = i * i; t5.data[i] = 1; t6.data[i] = i % 127 + 1;
-    // }
-    // Tensor<int> a1(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<double> a2(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<float> a3(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<long long> a4(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<bool> a5(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<char> a6(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // for (int i = 0; i < n; i++) {
-    //     a1.data[i] = 5; a2.data[i] = i; a3.data[i] = i;
-    //     a4.data[i] = 4; a5.data[i] = 1; a6.data[i] = i % 63 + 1;
-    // }
-    // Tensor<int> b1(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<double> b2(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<float> b3(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<long long> b4(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<bool> b5(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<char> b6(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // // b1 = add(a1, t1);  b1 = b1.add(a1); b1 = b1.add(t1); b1 = b1.add(5); 
-    // // b2 = add(a2, t2);  b2 = b2.add(a2); b2 = b2.add(t2); b2 = b2.add(5.0);
-    // // b3 = add(a3, t3);  b3 = b3.add(a3); b3 = b3.add(t3); b3 = b3.add(5.0f);
-    // // b4 = add(a4, t4);  b4 = b4.add(a4); b4 = b4.add(t4); b4 = b4.add(5ll);
-    // // b5 = add(a5, t5);  b5 = b5.add(a5); b5 = b5.add(t5); b5 = b5.add(true);
-    // // b6 = add(a6, t6);  b6 = b6.add(a6); b6 = b6.add(t6); b6 = b6.add('a');
-    // // b1 = sub(a1, t1);  b1 = b1.sub(a1); b1 = b1.sub(t1); b1 = b1.sub(5);
-    // // b2 = sub(a2, t2);  b2 = b2.sub(a2); b2 = b2.sub(t2); b2 = b2.sub(5.0);
-    // // b3 = sub(a3, t3);  b3 = b3.sub(a3); b3 = b3.sub(t3); b3 = b3.sub(5.0f);
-    // // b4 = sub(a4, t4);  b4 = b4.sub(a4); b4 = b4.sub(t4); b4 = b4.sub(5ll);
-    // // b5 = sub(a5, t5);  b5 = b5.sub(a5); b5 = b5.sub(t5); b5 = b5.sub(true);
-    // // b6 = sub(a6, t6);  b6 = b6.sub(a6); b6 = b6.sub(t6); b6 = b6.sub('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = mul(a1, t1);  b1 = b1.mul(a1); b1 = b1.mul(t1); b1 = b1.mul(5);
-    // b2 = mul(a2, t2);  b2 = b2.mul(a2); b2 = b2.mul(t2); b2 = b2.mul(5.0);
-    // b3 = mul(a3, t3);  b3 = b3.mul(a3); b3 = b3.mul(t3); b3 = b3.mul(5.0f);
-    // b4 = mul(a4, t4);  b4 = b4.mul(a4); b4 = b4.mul(t4); b4 = b4.mul(5ll);
-    // b5 = mul(a5, t5);  b5 = b5.mul(a5); b5 = b5.mul(t5); b5 = b5.mul(true);
-    // b6 = mul(a6, t6);  b6 = b6.mul(a6); b6 = b6.mul(t6); b6 = b6.mul('a');
-    // b1 = Div(a1, t1);  b1 = b1.Div(5);
-    // b2 = Div(a2, t2);  b2 = b2.Div(5.0);
-    // b3 = Div(a3, t3);  b3 = b3.Div(5.0f);
-    // b4 = Div(a4, t4);  b4 = b4.Div(5ll);
-    // b5 = Div(a5, t5);  b5 = b5.Div(true);
-    // b6 = Div(a6, t6);  b6 = b6.Div('a');
-    // int ans1; double ans2; float ans3; long long ans4; bool ans5; char ans6;
-    // b1 = t1.Log(); b2 = t2.Log(); b3 = t3.Log(); b4 = t4.Log(); b6 = t6.Log();
-    // ans1 = t1.mean(); ans2 = t2.mean(); ans3 = t3.mean(); ans4 = t4.mean(); ans6 = t6.mean();
-    // ans2 = t1.Max(); ans2 = t2.Max(); ans3 = t3.Max(); ans4 = t4.Max(); ans6 = t6.Max();
-    // ans2 = t1.Min(); ans2 = t2.Min(); ans3 = t3.Min(); ans4 = t4.Min(); ans6 = t6.Min();
-    // Tensor<bool> com(12, new int[12]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<int> c1(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<double> c2(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<float> c3(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<long long> c4(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<bool> c5(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // Tensor<char> c6(11, new int[11]{4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4});
-    // for (int i = 0; i < 12; ++i) c1 = t1.sum(i);
-    // for (int i = 0; i < 12; ++i) c2 = t2.sum(i);
-    // for (int i = 0; i < 12; ++i) c3 = t3.sum(i);
-    // for (int i = 0; i < 12; ++i) c4 = t4.sum(i);
-    // for (int i = 0; i < 12; ++i) c5 = t5.sum(i);
-    // for (int i = 0; i < 12; ++i) c6 = t6.sum(i);
-    // for (int i = 0; i < 12; ++i) c1 = sum(t1, i);
-    // for (int i = 0; i < 12; ++i) c2 = sum(t2, i);
-    // for (int i = 0; i < 12; ++i) c3 = sum(t3, i);
-    // for (int i = 0; i < 12; ++i) c4 = sum(t4, i);
-    // for (int i = 0; i < 12; ++i) c5 = sum(t5, i);
-    // for (int i = 0; i < 12; ++i) c6 = sum(t6, i);
-    // com = (t1 == a1); com = (t2 == a2); com = (t3 == a3); com = (t4 == a4); com = (t5 == a5); com = (t6 == a6);
-    // com = (t1 != a1); com = (t2 != a2); com = (t3 != a3); com = (t4 != a4); com = (t5 != a5); com = (t6 != a6);
-    // com = (t1 > a1); com = (t2 > a2); com = (t3 > a3); com = (t4 > a4); com = (t5 > a5); com = (t6 > a6);
-    // com = (t1 < a1); com = (t2 < a2); com = (t3 < a3); com = (t4 < a4); com = (t5 < a5); com = (t6 < a6);
-    // com = (t1 >= a1); com = (t2 >= a2); com = (t3 >= a3); com = (t4 >= a4); com = (t5 >= a5); com = (t6 >= a6);
-    // com = (t1 <= a1); com = (t2 <= a2); com = (t3 <= a3); com = (t4 <= a4); com = (t5 <= a5); com = (t6 <= a6);
-    // auto end = chrono::high_resolution_clock::now();
-    // chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken by function: " << elapsed.count() << " seconds" << endl;
-    Tensor<int> t1(2, new int[2]{2, 2});
-    cout << t1.size() << t1.type() << t1.data_ptr();
+    // Tensor<int> t1(2, new int[2]{3, 3}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+    // cout << *einsum(string("ii->i"), t1) << endl;
+    // Tensor<int> t2(1, new int[1]{9}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+    // Tensor<int> t3(1, new int[1]{9}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+    // cout << *einsum(string("i,j->ij"), t2, t3) << endl;
+    // Tensor<int> t4(2, new int[2]{3, 3}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+    // // cout << *einsum(string("ik,kj->ij"), t1, t4) << endl;
+    Tensor<int> t5(3, new int[3]{2, 3, 3}, new int[18]{1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    Tensor<int> t6(3, new int[3]{2, 3, 3}, new int[18]{1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    cout << *einsum(string("bik,bkj->bij"), t5, t6) << endl;
+    // cout << *einsum(string("bik,kj->bij"), t5, t4) << endl;
+    Tensor<double> t7(3, new int[3]{3, 5, 4}, new double[60] {
+        0.6542, 0.7486, 0.9158, 0.6722,
+        0.6426, 0.5420, 0.6805, 0.9508,
+        0.2257, 0.8992, 0.8890, 0.1071,
+        0.2404, 0.2429, 0.0213, 0.6407,
+        0.2503, 0.6149, 0.4670, 0.8534,
+        0.7803, 0.4479, 0.1876, 0.3266,
+        0.5837, 0.6906, 0.7561, 0.2645,
+        0.1560, 0.1896, 0.5526, 0.3981,
+        0.3586, 0.4266, 0.2531, 0.2883,
+        0.2547, 0.9360, 0.9020, 0.0631,
+        0.9858, 0.8774, 0.1167, 0.4705,
+        0.0710, 0.1224, 0.5544, 0.6838,
+        0.5775, 0.3225, 0.9105, 0.4762,
+        0.4499, 0.6557, 0.7880, 0.5779,
+        0.1033, 0.3359, 0.3628, 0.1540
+    });
+
+    Tensor<double> t8(2, new int[2]{2, 5}, new double[10] {
+        0.1169, 0.9707, 0.7564, 0.2771, 0.9437,
+        0.9117, 0.6582, 0.7966, 0.5469, 0.7585
+    });
+
+    Tensor<double> t9(2, new int[2]{2,4}, new double[8] {
+        0.1720, 0.6713, 0.1147, 0.7775,
+        0.5898, 0.4999, 0.0623, 0.6685
+    });
+
+    cout << *einsum(string("bn,anm,bm->ba"), t8, t7, t9) << endl;
     return 0;
 }
