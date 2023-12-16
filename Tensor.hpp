@@ -1437,66 +1437,82 @@ namespace ts {
 	void Solve_Einsum_2(int x) {
 		
 	} 
+	template <typename T, typename ... Args>
+	void DO(Tensor<T>* res,T pre,int* Map,std::string s,int now,int* Now,int* R,const Tensor<T>& X, const Args&... A) {
+		int p=0;
+		int len=X.dim;
+		int* Lim=(int*)malloc(len<<2);
+		while(s[now]!=','){
+			Lim[p]=Now[Map[s[now]-'a']];
+			++p,++now;
+		}
+		DO(res,pre*X.getVal(Lim),Map,s,now+1,Now,R,A...);
+		free(Lim);
+	}
+
+	template <typename T, typename ... Args>
+	void Pre_do(Tensor<T>* res,int* Map,int& sz,std::string s,int now,int* Now,int* R,const Args&... A) {
+		if(now>=sz)return DO(res,(T)1,Map,s,0,Now,R,A...);
+		for(int i=0;i<R[now];++i){
+			Now[now]=i;
+			Pre_do(res,Map,sz,s,now+1,Now,R,A...);
+		}
+	}
+	
 	template <typename T>
-	Tensor<T> einsum(std::string s, Tensor<T> src1, Tensor<T> src2) {
-		using namespace std;
-		int fir_l, fir_r;
-		int sec_l, sec_r;
-		int Is_empty;
-		vector<int> A[200], B[200], com1[200], com2[200], obj[200];
-		vector<int> A_dim[200], B_dim[200], com1_dim[200], com2_dim[200], obj_dim[200];
-		set<int> Para_A, Para_B, Para_com;
-		for (int i = 0; i < s.length(); ++i) {
-			if (s[i] == '-') {
-				fir_l = 0; fir_r = i - 1;
-				sec_l = i + 2; sec_r = s.length() - 1;
-				break;
+	Tensor<T>* slipt(int* Map,int& sz,std::string s,int now,int* R,const Tensor<T>& X) {
+		int p=0;
+		while(s[now]!='-'){
+			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
+			if(R[Map[s[now]-'a']]!=X.shape[p]){
+				throw std::invalid_argument("Unmatched dimention.");
 			}
+			++p,++now;
 		}
-		int flag = 0; int pos;
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
+		now+=2;
+		int len=s.size()-now+(now==s.size());
+		
+		int* Lim=(int*)malloc(len<<2);
+		if(now!=s.size()){
+			for(int i=now;i<s.size();++i)Lim[i-now]=R[Map[s[i]-'a']];
+		}else Lim[0]=1;
+		Tensor<T>* res=new Tensor<T>(len,Lim);
+		free(Lim);
+		return res;
+	}
+	
+	template <typename T, typename ... Args>
+	Tensor<T>* slipt(int* Map,int& sz,std::string s,int now,int* R,const Tensor<T>& X, const Args&... A) {
+		int p=0;
+		#pragma omp parallel default(shared) num_threads(8) 
+		{
+			int id = omp_get_thread_num(), numThreads = omp_get_num_threads(); 
+			if (now % numThreads != id) return NULL;
+			while(s[now]!=','){
+			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
+			if(R[Map[s[now]-'a']]!=X.shape[p])throw std::invalid_argument("Unmatched dimention.");
+			++p,++now;
 			}
-			if (!flag) {
-				Para_A.insert(s[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) continue;
-				if (Para_A.find(s[i]) != Para_A.end()) {
-					if (src1.shape[i] != src2.shape[i - pos]) {
-						throw invalid_argument("Unmatched dimention.");
-					}
-					Para_A.erase(s[i]); Para_com.insert(s[i]);
-				} else Para_B.insert(s[i]);
-			}
+			return slipt(Map,sz,s,now+1,R,A...);
 		}
-		flag = 0; 
-		for (int i = fir_l; i <= fir_r; ++i) {
-			if (s[i] == ',') {
-				flag = 1; pos = i + 1; continue;
-			}
-			if (!flag) {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com1[s[i]].push_back(i); com1_dim[s[i]].push_back(src1.shape[i]);
-				} else A[s[i]].push_back(i), A_dim[s[i]].push_back(src1.shape[i]);
-			} else {
-				if (Para_com.find(s[i]) != Para_com.end()) {
-					com2[s[i]].push_back(i - pos); com2_dim[s[i]].push_back(src2.shape[i]);
-				} else B[s[i]].push_back(i - pos), B_dim[s[i]].push_back(src2.shape[i]);
-			}
-		}
-		if (sec_l == sec_r) {
-			Is_empty = 1;
-		} else {
-			Is_empty = 0;
-			for (int i = sec_l; i <= sec_r; ++i) {
-				obj[s[i]].push_back(i - sec_l);
-			}
-		}
-		if (Is_empty) { // Sum up to a single number
-			Solve_Einsum_1(0);
-		} else {
-			Solve_Einsum_2(0);
-		}
+	}
+
+	template <typename T, typename ... Args>
+	Tensor<T>* einsum(std::string s, const Tensor<T>& X, const Args&... A) {
+		int cnt=0,m=s.size(),f=0;
+		int n=sizeof...(A)+1;
+		for(int i=0;i<m;++i)cnt+=s[i]==',',f|=s[i]=='-';
+		if(m&&s[0]!='-')++cnt;
+		if(!f)s+="->";
+		if(cnt!=n)throw std::invalid_argument("Unmatched dimention.");
+		int* Map=(int*)malloc(26<<2);
+		std::memset(Map,-1,26<<2);
+		int sz=0;
+		int* Now=(int*)malloc((m+1)<<2);
+		int* R=(int*)malloc((m+1)<<2);
+		Tensor<T>* res=slipt(Map,sz,s,0,R,X,A...);
+		Pre_do(res,Map,sz,s,0,Now,R,X,A...);
+		free(Map),free(Now),free(R);
+		return res;
 	}
 }
