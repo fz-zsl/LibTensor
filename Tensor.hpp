@@ -191,7 +191,6 @@ namespace ts {
 					pos += (idx[i] % shape[i]) * size;
 					size *= shape[i];
 				}
-				// printf("set:%d \n",pos);
 				data[pos] = val;
 			}
 			
@@ -205,14 +204,10 @@ namespace ts {
 						range[i].second = range[i].first + 1;
 					}
 					if (range[i].first < 0 || range[i].first >= this->shape[i]) {
-						char message[50] = "Left bound out of range.";
-						//sprintf(message, "Left bound of dimension %d out of range.", i);
-						throw std::invalid_argument(message);
+						throw std::invalid_argument("Left bound out of range.");
 					}
 					if (range[i].second <= range[i].first || range[i].second > this->shape[i]) {
-						char message[50] = "Right bound out of range.";
-						//sprintf(message, "Right bound of dimension %d out of range.", i);
-						throw std::invalid_argument(message);
+						throw std::invalid_argument("Right bound out of range.");
 					}
 				}
 				int *oldIdx = new int[this->dim];
@@ -339,14 +334,10 @@ namespace ts {
 						range[i].second = range[i].first + 1;
 					}
 					if (range[i].first < 0 || range[i].first >= this->shape[i]) {
-						char message[50] = "Left bound out of range.";;
-						//sprintf(message, "Left bound of dimension %d out of range.", i);
-						throw std::invalid_argument(message);
+						throw std::invalid_argument("Left bound out of range.");
 					}
 					if (range[i].second <= range[i].first || range[i].second > this->shape[i]) {
-						char message[50] = "Right bound out of range.";
-						//sprintf(message, "Right bound of dimension %d out of range.", i);
-						throw std::invalid_argument(message);
+						throw std::invalid_argument("Right bound out of range.");
 					}
 				}
 				int *oldIdx = new int[this->dim];
@@ -581,7 +572,6 @@ namespace ts {
 					if (printShape && newShape[newDim - 2] > 7 && newIdx[newDim - 2] == 2) {
 						i += newShape[newDim - 2] - 5;
 						newIdx[newDim - 2] = newShape[newDim - 2] - 2;
-						// printf("%d\n", newShape[newDim - 1]);
 						needCdots = true;
 					}
 					else {
@@ -692,32 +682,6 @@ namespace ts {
 			}
 
 			Tensor<T> mul(Tensor src) {
-				// if (this->dim != src.dim) throw std::invalid_argument("step cannot be zero.");
-				// for (int i = 0; i < this->dim - 2; ++i) 
-				// 	if (this->shape[i] != src.shape[i]) throw std::invalid_argument("step cannot be zero.");
-				// if (this->shape[this->dim - 1] != src.shape[src.dim - 2] || this->shape[this->dim - 2] != src.shape[src.dim - 1]) {
-				// 	throw std::invalid_argument("step cannot be zero.");
-				// }
-				// int *tmp_shape = new int[this->dim];
-				// for (int i = 0; i < this->dim - 1; ++i) tmp_shape[i] = this->shape[i]; 
-				// tmp_shape[this->dim - 1] = src.shape[src.dim - 1];
-				// Tensor<T> result(this->dim, tmp_shape);
-				// int base = this->shape[this->dim - 2] * src.shape[src.dim - 1];
-				// int size = 1, row = this->shape[this->dim - 2], col = src.shape[src.dim - 1];
-				// int base1 = this->shape[this->dim - 1] * this->shape[this->dim - 2];
-				// int base2 = src.shape[src.dim - 1] * src.shape[src.dim - 2];
-				// for (int i = 0; i < this->dim - 2; ++i) size = size * this->shape[i];
-				// for (int i = 0; i < size; ++i) { 
-				// 	for (int j = 0; j < row; ++j) {
-				// 		for (int k = 0; k < col; ++k) {
-				// 			T cur = (T)0;
-				// 			for (int l = 0; l < this->shape[this->dim - 1]; ++l) 
-				// 				cur += this->data[i * base1 + j * this->shape[this->dim - 1] + l] * src.data[i * base2 + l * src.shape[src.dim - 1] + k];
-				// 			result.data[i * base + j * col + k] = cur;
-				// 		}
-				// 	}
-				// }
-				// return result;
 				if (src.dim != this->dim) {
 					throw std::invalid_argument("step cannot be zero.");
 				}
@@ -1316,10 +1280,11 @@ namespace ts {
 		}
 		pre*=X.getVal(Lim);
 		now+=2;
-		int len1=s.size()-now;
+		int len1=s.size()-now+(now==s.size());
 		int* Pre=(int*)malloc(len1<<2);
-		for(int i=now;i<s.size();++i)Pre[i-now]=Now[Map[s[i]-'a']];
-		// printf("DO: %d %d %d\n",pre,Pre[0],Pre[1]);
+		if(now!=s.size()){
+			for(int i=now;i<s.size();++i)Pre[i-now]=Now[Map[s[i]-'a']];
+		}else Pre[0]=0;
 		pre+=res->getVal(Pre);
 		res->setVal(Pre,pre);
 		free(Lim),free(Pre);
@@ -1329,7 +1294,6 @@ namespace ts {
 	void DO(Tensor<T>* res,T pre,int* Map,std::string s,int now,int* Now,int* R,const Tensor<T>& X, const Args&... A) {
 		int p=0;
 		int len=X.dim;
-		// printf("DO__: %d\n",now);
 		int* Lim=(int*)malloc(len<<2);
 		while(s[now]!=','){
 			Lim[p]=Now[Map[s[now]-'a']];
@@ -1342,10 +1306,8 @@ namespace ts {
 	template <typename T, typename ... Args>
 	void Pre_do(Tensor<T>* res,int* Map,int& sz,std::string s,int now,int* Now,int* R,const Args&... A) {
 		if(now>=sz)return DO(res,(T)1,Map,s,0,Now,R,A...);
-		// printf("Pre_do: %d\n",now);
 		for(int i=0;i<R[now];++i){
 			Now[now]=i;
-			// printf("pre:%d %d\n",now,i);
 			Pre_do(res,Map,sz,s,now+1,Now,R,A...);
 		}
 	}
@@ -1353,23 +1315,20 @@ namespace ts {
 	template <typename T>
 	Tensor<T>* slipt(int* Map,int& sz,std::string s,int now,int* R,const Tensor<T>& X) {
 		int p=0;
-			// printf("%d %d\n",Map[8],X.shape[p]);
-		
 		while(s[now]!='-'){
-			// printf("%d %d\n",Map[s[now]-'a'],X.shape[p]);
-
 			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
 			if(R[Map[s[now]-'a']]!=X.shape[p]){
-				// printf("%d %d\n",R[Map[s[now]-'a']],X.shape[p]);
-				// fflush(stdout);
-				throw std::invalid_argument("Unmatched dimention.3");
+				throw std::invalid_argument("Unmatched dimention.");
 			}
 			++p,++now;
 		}
 		now+=2;
-		int len=s.size()-now;
+		int len=s.size()-now+(now==s.size());
+		
 		int* Lim=(int*)malloc(len<<2);
-		for(int i=now;i<s.size();++i)Lim[i-now]=R[Map[s[i]-'a']];
+		if(now!=s.size()){
+			for(int i=now;i<s.size();++i)Lim[i-now]=R[Map[s[i]-'a']];
+		}else Lim[0]=1;
 		Tensor<T>* res=new Tensor<T>(len,Lim);
 		free(Lim);
 		return res;
@@ -1381,9 +1340,7 @@ namespace ts {
 
 		while(s[now]!=','){
 			if(Map[s[now]-'a']==-1)Map[s[now]-'a']=sz++,R[Map[s[now]-'a']]=X.shape[p];
-			// printf("?%d %d %d %d\n",Map[s[now]-'a'],now,sz,X.shape[p]);
-			// fflush(stdout);
-			if(R[Map[s[now]-'a']]!=X.shape[p])throw std::invalid_argument("Unmatched dimention.2");
+			if(R[Map[s[now]-'a']]!=X.shape[p])throw std::invalid_argument("Unmatched dimention.");
 			++p,++now;
 		}
 		return slipt(Map,sz,s,now+1,R,A...);
@@ -1393,17 +1350,16 @@ namespace ts {
 	Tensor<T>* einsum(std::string s, const Tensor<T>& X, const Args&... A) {
 		int cnt=0,m=s.size(),f=0;
 		int n=sizeof...(A)+1;
-		for(int i=0;i<m;++i)cnt+=s[i]==',';
+		for(int i=0;i<m;++i)cnt+=s[i]==',',f|=s[i]=='-';
 		if(m&&s[0]!='-')++cnt;
-		if(cnt!=n)throw std::invalid_argument("Unmatched dimention.1");
+		if(!f)s+="->";
+		if(cnt!=n)throw std::invalid_argument("Unmatched dimention.");
 		int* Map=(int*)malloc(26<<2);
 		std::memset(Map,-1,26<<2);
 		int sz=0;
 		int* Now=(int*)malloc((m+1)<<2);
 		int* R=(int*)malloc((m+1)<<2);
-		// printf("slipt_start\n");
 		Tensor<T>* res=slipt(Map,sz,s,0,R,X,A...);
-		// printf("Pre_do_start\n");
 		Pre_do(res,Map,sz,s,0,Now,R,X,A...);
 		free(Map),free(Now),free(R);
 		return res;
