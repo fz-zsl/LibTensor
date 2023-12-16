@@ -386,6 +386,22 @@ namespace ts {
 				delete[] data;
 			}
 
+			Tensor<T> size() {
+				return Tensor<int>(1, new int[1]{dim}, shape);
+			}
+
+			std::string type() {
+				return std::string(typeid(T).name()) + "\n";
+			}
+
+			std::string data_ptr() {
+				char *addr = new char[20];
+				sprintf(addr, "%p\n", data);
+				std::string str(addr);
+				delete[] addr;
+				return str;
+			}
+
 			T getVal(int idx[]) {
 				int pos = 0, size = 1;
 				for (int i = dim - 1; i >= 0; --i) {
