@@ -47,7 +47,7 @@ int main() {
     // cout << *einsum(string("bn,anm,bm->ba"), t8, t7, t9) << endl;
 
     Tensor<int> t1(2, new int[2]{3, 3}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
-    Tensor<int> t2 = t1.reshape(1, new int[1]{9});
+    Tensor<int> t2 = reshape(t1, 1, new int[1]{9});
     cout << t2 << endl;
     t1[new int[2]{0,2}] = 100;
     cout << t1 << endl;

@@ -1378,4 +1378,9 @@ namespace ts {
 		free(Map),free(Now),free(R);
 		return res;
 	}
+
+	template <typename T>
+	Tensor<T> reshape(Tensor<T> src, int newDim, int newShape[]) {
+		return src.reshape(newDim, newShape);
+	}
 }
