@@ -913,6 +913,20 @@ namespace ts {
 				}
 				return *this;
 			}
+
+			Tensor reshape(int newDim, int newShape[]) {
+				Tensor res(newDim, newShape, this->data);
+				return res;
+			}
+
+			T& operator[](int pos[]) {
+				int idx = 0, weight = 1;
+				for (int i = this->dim - 1; i >= 0; --i) {
+					idx += pos[i] * weight;
+					weight *= this->shape[i];
+				}
+				return this->data[idx];
+			}
 	};
 
 // Part 1: creation and initialization
