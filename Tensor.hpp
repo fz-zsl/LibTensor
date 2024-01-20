@@ -1,4 +1,4 @@
-//#define CMZ_TENSOR_HPP
+// #define CMZ_TENSOR_HPP
 
 #include <iostream>
 #include <fstream>
@@ -144,15 +144,22 @@ namespace ts {
 				outputBuf = "";
 			}
 
-			Tensor<T> load(std::string filename) {
-				FILE* input = fopen(filename.c_str(), "r");
-				if (input == nullptr) {
-					throw std::invalid_argument("Cannot open file.");
-				}
-				Tensor<T> result(input);
-				fclose(input);
-				return result;
-			}
+			// void load(std::string filename) {
+			// 	FILE* input = fopen(filename.c_str(), "r");
+			// 	if (input == nullptr) {
+			// 		throw std::invalid_argument("Cannot open file.");
+			// 	}
+			// 	Tensor<T> result(input);
+			// 	fclose(input);
+			// 	int sz = 1;
+			// 	for (int i = 0; i < dim; ++i) {
+			// 		sz *= shape[i];
+			// 	}
+			// 	for (int i = 0; i < sz; ++i) {
+			// 		data[i] = result.data[i];
+			// 	}
+			// 	return;
+			// }
 
 			~Tensor() {
 				dim = -1;
@@ -176,7 +183,7 @@ namespace ts {
 				return str;
 			}
 
-			T getVal(int idx[]) const {
+			T& getVal(int idx[]) const {
 				int pos = 0, size = 1;
 				for (int i = dim - 1; i >= 0; --i) {
 					pos += (idx[i] % shape[i]) * size;
@@ -192,6 +199,10 @@ namespace ts {
 					size *= shape[i];
 				}
 				data[pos] = val;
+			}
+
+			T& index(int idx[]) {
+				return getVal(idx);
 			}
 			
 			Tensor<T> slice(std::pair<int,int> range[]) {
@@ -485,7 +496,7 @@ namespace ts {
 					size *= this->shape[i];
 				}
 				for (int i = 0; i < size; ++i) {
-					ost << std::setw(5) << this->data[i] << " ";
+					ost << this->data[i] << " ";
 				}
 				ost << std::endl;
 				return ost;
@@ -718,7 +729,7 @@ namespace ts {
 				int size = 1;
 				for (int i = 0; i < src.dim; ++i) size *= src.shape[i];
 				for (int i = 0; i < size; ++i) {
-					result.data[i] = src.data[i] / this->data[i];
+					result.data[i] = this->data[i] / src.data[i];
 				}
 				return result;
 			}
@@ -1004,7 +1015,7 @@ namespace ts {
 		}
 		Tensor<T> result(src_dim, src_shape);
 		int size = 1;
-		srand(time(NULL));
+		// srand(time(NULL));
 		for (int i = 0; i < src_dim; ++i) {
 			size *= src_shape[i];
 		}
@@ -1075,6 +1086,10 @@ namespace ts {
 	}
 
 // Part 2: tensor operations
+	template <typename T>
+	T index(Tensor<T> src, int pos[]) {
+		return src.index(pos);
+	}
 
 	template <typename T>
 	Tensor<T> slice(Tensor<T> src, std::pair<int,int> range[]) {
@@ -1112,11 +1127,11 @@ namespace ts {
 		return src.permute(src_order);
 	}
 
-	template <typename T>
-	void load(Tensor<T> src, const char* filename) {
-		// load the tensor from the given file
-		return src.load(filename);
-	}
+	// template <typename T>
+	// void load(Tensor<T>& src, const char* filename) {
+	// 	// load the tensor from the given file
+	// 	// *(new Tensor<T> (fopen(filename, "r")));
+	// }
 
 	template <typename T>
 	void print(Tensor<T> src, int newDim, int newShape[], FILE* out = stdout, bool printShape = false) {
