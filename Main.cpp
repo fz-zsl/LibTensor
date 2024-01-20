@@ -162,6 +162,83 @@ int main() {
         t1a.lt(t1b).print(); t1a.le(t1b).print();
     }
 
+	{
+		// Task 3.4.1
+		puts("Task 3.4.1: Extracting elements along diagonal");
+		Tensor<int>* res;
+		Tensor<int> t1(2, new int[2]{3, 3}, new int[9]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+		res=einsum("ii->i",t1);
+		cout<< *res<<endl;
+
+		// Task 3.4.2
+		puts("Task 3.4.2: Transpose");
+		res=einsum("ij->ji",t1);
+		cout<< *res<<endl;
+
+		// Task 3.4.3
+		puts("Task 3.4.3: Permute");
+		Tensor<int> t3(3, new int[3]{3, 3,3}, new int[27]{1, 2, 3, 4, 5, 6, 7, 8, 9,10
+								,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27});
+		res=einsum("ijk->kji",t3);
+		cout<< *res<<endl;
+
+		// Task 3.4.4
+		puts("Task 3.4.4: Reduce sum");
+		res=einsum("ij->",t1);
+		cout<< *res<<endl;
+
+		// Task 3.4.5
+		puts("Task 3.4.5: Sum along dimension");
+		res=einsum("ij->j",t1);
+		cout<< *res<<endl;
+
+		// Task 3.4.6
+		puts("Task 3.4.6: Matrix and vector mul");
+		Tensor<int> t4(2, new int[2]{2, 2}, new int[4]{1, 2, 3, 4});
+		Tensor<int> t5(1, new int[1]{2}, new int[2]{1, 2});
+		Tensor<int> t6(3, new int[3]{2, 2,2}, new int[8]{1, 2, 3, 4,5,6,7,8});
+		Tensor<int> t7(4, new int[4]{2, 2,2,2}, new int[16]{1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15,16});
+		Tensor<int> t8(5, new int[5]{2, 2,2,2,2}, new int[32]{1, 2, 3, 4,5,6,7,8,10,11,12,13,14,15,16
+												,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+		res=einsum("ik,k->i",t4,t5);
+		cout<< *res<<endl;
+
+		// Task 3.4.7
+		puts("Task 3.4.7: Matrix mul");
+		res=einsum("ik,kj->ij",t4,t4);
+		cout<< *res<<endl;
+
+		// Task 3.4.8
+		puts("Task 3.4.8: Dot product");
+		res=einsum("i,i->",t5,t5);
+		cout<< *res<<endl;
+
+		// Task 3.4.9
+		puts("Task 3.4.9: Pointwise mul and reduce sum");
+		res=einsum("ij,ij->",t4,t4);
+		cout<< *res<<endl;
+
+		// Task 3.4.10
+		puts("Task 3.4.10: Outer product");
+		res=einsum("i,j->ij",t5,t5);
+		cout<< *res<<endl;
+
+		// Task 3.4.11
+		puts("Task 3.4.11: Batch matrix mul");
+		res=einsum("ijk,jkl->ijl",t6,t6);
+		cout<< *res<<endl;
+
+		// Task 3.4.12
+		puts("Task 3.4.12: Tensor contraction");
+		res=einsum("pqrs,tuqvr->pstuv",t7,t8);
+		cout<< *res<<endl;
+
+		// Task 3.4.13
+		puts("Task 3.4.13: Bilinear transformation");
+		res=einsum("ik,jkl->ij",t4,t6);
+		cout<< *res<<endl;
+	}
+
 	// {
 	// 	// Task 4.1
 	// 	puts("Task 4.1: File I/O");
